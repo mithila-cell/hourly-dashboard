@@ -5,13 +5,14 @@ import os
 # Page Configuration
 st.set_page_config(page_title="GIZA Hourly Production Dashboard", layout="wide")
 
-# Custom CSS for Mobile Split Cell Standard Layout
+# Custom CSS for Fixed Width Desktop & Mobile Responsive Table
 st.markdown("""
     <style>
         .mobile-table-container {
             width: 100%;
+            max-width: 800px; /* Desktop එකේදී table එක ඇදීම පාලනය කරයි */
+            margin: 10px auto; /* Table එක මැදට center කරයි */
             overflow-x: auto;
-            margin-top: 10px;
         }
         .mobile-table {
             width: 100%;
@@ -41,7 +42,7 @@ st.markdown("""
             flex-direction: column;
             height: 100%;
             width: 100%;
-            min-width: 28px;
+            min-width: 32px;
         }
         .target-box {
             background-color: #00a65a; /* Green Target Top */
