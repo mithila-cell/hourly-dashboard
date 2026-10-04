@@ -71,64 +71,101 @@ try:
     st.divider()
     st.subheader("📋 Module Wise Hourly Production Table")
 
-    # Display clean-up (Decimal ඉවත් කිරීම)
-    display_df = raw_df.copy()
-    
-    for col in display_df.columns:
-        if col not in ['MODULE', 'Line No']:
-            def clean_val(val):
-                if pd.isna(val) or str(val).strip() in ['', 'None', 'nan']:
-                    return ''
-                try:
-                    return str(int(float(val)))
-                except (ValueError, TypeError):
-                    return str(val)
-            display_df[col] = display_df[col].apply(clean_val)
+    # Table Header Shortening & Formatting
+    html_table = """
+    <style>
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: sans-serif;
+            font-size: 13px;
+            text-align: center;
+        }
+        .custom-table th {
+            background-color: #f1f3f4;
+            color: #333;
+            padding: 6px 4px;
+            border: 1px solid #ddd;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        .custom-table td {
+            padding: 6px 4px;
+            border: 1px solid #ddd;
+        }
+        .pass-cell {
+            background-color: #c8e6c9;
+            color: #1b5e20;
+            font-weight: bold;
+        }
+        .fail-cell {
+            background-color: #ffcdd2;
+            color: #b71c1c;
+            font-weight: bold;
+        }
+    </style>
+    <table class="custom-table">
+        <thead>
+            <tr>
+                <th>Line<br>No</th>
+                <th>Day<br>Forecast</th>
+                <th>Hourly<br>Forecast</th>
+                <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+                <th>6</th><th>7</th><th>8</th><th>9</th>
+                <th>TOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+    """
 
-    # Conditional Formatting Function
-    def highlight_hourly(row):
-        styles = [''] * len(row)
-        target = row.get('Hourly Forecast', '')
+    for idx, row in raw_df.iterrows():
+        html_table += "<tr>"
         
+        # Line No / Module
+        line_no = row.get('Line No', row.get('MODULE', ''))
+        html_table += f"<td><b>{line_no if pd.notna(line_no) else ''}</b></td>"
+        
+        # Day Forecast
+        df_val = row.get('Day Forecast', '')
+        html_table += f"<td>{int(float(df_val)) if pd.notna(df_val) and str(df_val).strip()!='' else ''}</td>"
+        
+        # Hourly Forecast
+        hf_val = row.get('Hourly Forecast', '')
         try:
-            target_val = float(target) if target != '' else 0
-        except (ValueError, TypeError):
+            target_val = float(hf_val) if pd.notna(hf_val) and str(hf_val).strip()!='' else 0
+            hf_str = str(int(target_val)) if target_val > 0 else ''
+        except:
             target_val = 0
+            hf_str = ''
+        html_table += f"<td>{hf_str}</td>"
 
-        for i, col in enumerate(row.index):
-            if str(col) in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                val_str = str(row[col]).strip()
-                if val_str != '':
-                    try:
-                        actual_val = float(val_str)
-                        if target_val > 0:
-                            if actual_val >= target_val:
-                                styles[i] = 'background-color: #c8e6c9; color: #1b5e20; font-weight: bold;'
-                            else:
-                                styles[i] = 'background-color: #ffcdd2; color: #b71c1c; font-weight: bold;'
-                    except (ValueError, TypeError):
-                        pass
-        return styles
+        # Hours 1 to 9
+        for h in range(1, 10):
+            val = row.get(str(h), '')
+            cell_class = ""
+            val_str = ""
+            if pd.notna(val) and str(val).strip() != '' and str(val).lower() != 'nan':
+                try:
+                    act_val = float(val)
+                    val_str = str(int(act_val))
+                    if target_val > 0:
+                        if act_val >= target_val:
+                            cell_class = "pass-cell"
+                        else:
+                            cell_class = "fail-cell"
+                except:
+                    val_str = str(val)
+            
+            html_table += f"<td class='{cell_class}'>{val_str}</td>"
 
-    # මාතෘකා උඩ-යට පේළි 2කට කඩා Column Width එක අඩු කිරීම
-    col_config = {
-        "Line No": st.column_config.Column("Line\nNo", width="small"),
-        "MODULE": st.column_config.Column("Module", width="small"),
-        "Day Forecast": st.column_config.Column("Day\nForecast", width="small"),
-        "Hourly Forecast": st.column_config.Column("Hourly\nForecast", width="small"),
-        "TOTAL": st.column_config.Column("TOTAL", width="small")
-    }
-    
-    for i in range(1, 10):
-        col_config[str(i)] = st.column_config.Column(str(i), width="small")
+        # TOTAL
+        tot_val = row.get('TOTAL', '')
+        html_table += f"<td><b>{int(float(tot_val)) if pd.notna(tot_val) and str(tot_val).strip()!='' and str(tot_val).lower()!='nan' else ''}</b></td>"
+        html_table += "</tr>"
 
-    # Table Display
-    st.dataframe(
-        display_df.style.apply(highlight_hourly, axis=1), 
-        use_container_width=True, 
-        hide_index=True,
-        column_config=col_config
-    )
+    html_table += "</tbody></table>"
+
+    st.markdown(html_table, unsafe_allow_html=True)
 
 except Exception as e:
     st.error(f"Data Load කිරීමේදී දෝෂයක් සිදු විය: {e}")
