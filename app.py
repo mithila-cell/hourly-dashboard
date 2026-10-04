@@ -10,7 +10,7 @@ st.markdown("""
     <style>
         .mobile-table-container {
             width: 100%;
-            max-width: 900px;
+            max-width: 850px;
             margin: 10px auto;
             overflow-x: auto;
         }
@@ -79,9 +79,9 @@ def load_data():
 try:
     raw_df = load_data()
 
-    # Active hours calculation
+    # Active hours calculation (1 to 8 only)
     active_hours = []
-    for h in range(1, 10):
+    for h in range(1, 9):
         col = str(h)
         if col in raw_df.columns:
             has_data = pd.to_numeric(raw_df[col], errors='coerce').notna().any()
@@ -114,7 +114,7 @@ try:
     st.divider()
     st.subheader("📋 Module Wise Hourly Production Table")
 
-    # Clean Mobile HTML Table Generation
+    # Clean Mobile HTML Table Generation (Hours 1 to 8)
     html_table = """
     <div class="mobile-table-container">
     <table class="mobile-table">
@@ -124,7 +124,7 @@ try:
                 <th>Day<br>Fcst</th>
                 <th>Hr<br>Fcst</th>
                 <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
-                <th>6</th><th>7</th><th>8</th><th>9</th>
+                <th>6</th><th>7</th><th>8</th>
                 <th>Total</th>
             </tr>
         </thead>
@@ -161,8 +161,8 @@ try:
             hf_str = ''
         html_table += f"<td>{hf_str}</td>"
 
-        # Hours 1 to 9 (Single Cell with Target Comparison Color)
-        for h in range(1, 10):
+        # Hours 1 to 8 (Single Cell with Target Comparison Color)
+        for h in range(1, 9):
             val = row.get(str(h), '')
             cell_class = ""
             val_str = ""
@@ -196,4 +196,4 @@ try:
     st.markdown(html_table, unsafe_allow_html=True)
 
 except Exception as e:
-    st.error(f"Data load maduvaga error bandide: {e}")
+    st.error(f"Data Load කිරීමේදී දෝෂයක් සිදු විය: {e}")
