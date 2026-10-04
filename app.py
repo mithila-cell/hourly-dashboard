@@ -3,25 +3,21 @@ import pandas as pd
 import os
 
 # Page Configuration
-st.set_page_config(page_title="GIZA Hourly Production Dashboard - Plant 2", layout="wide")
+st.set_page_config(page_title="GIZA Hourly Production Dashboard", layout="wide")
 
-# Logo Display Logic (File එක තිබේ නම් පමණක් පෙන්වයි, නැතත් Error නොදෙයි)
+# Logo Display Logic
 logo_col1, logo_col2, title_col = st.columns([1, 1, 4])
 
 with logo_col1:
-    giza_logo_found = False
     for filename in ["GizaCo-Logo.jpg", "GizaCo-Logo.png", "GizaCo-Logo.jpeg", "giza.png", "giza.jpg"]:
         if os.path.exists(filename):
             st.image(filename, width=120)
-            giza_logo_found = True
             break
 
 with logo_col2:
-    hij_logo_found = False
     for filename in ["HIJ LOGO.png", "HIJ LOGO.jpg", "HIJ LOGO.jpeg", "hij.png", "hij.jpg"]:
         if os.path.exists(filename):
             st.image(filename, width=120)
-            hij_logo_found = True
             break
 
 with title_col:
@@ -40,25 +36,38 @@ def load_data():
 try:
     raw_df = load_data()
 
-    # KPI Calculations
-    if 'Day Forecast' in raw_df.columns:
-        total_target = pd.to_numeric(raw_df['Day Forecast'], errors='coerce').sum()
+    # 1 සිට 9 දක්වා Data ඇතුළත් කර ඇති අවසාන පැය (Current Hour) සොයා ගැනීම
+    active_hours = []
+    for h in range(1, 10):
+        col = str(h)
+        if col in raw_df.columns:
+            # හිස් නැති අගයන් තිබේදැයි පරීක්ෂා කිරීම
+            has_data = pd.to_numeric(raw_df[col], errors='coerce').notna().any()
+            if has_data:
+                active_hours.append(h)
+
+    current_hour = max(active_hours) if active_hours else 0
+
+    # Up to Now Target & Actual Calculation
+    if current_hour > 0 and 'Hourly Forecast' in raw_df.columns:
+        hourly_target_sum = pd.to_numeric(raw_df['Hourly Forecast'], errors='coerce').fillna(0).sum()
+        upto_now_target = hourly_target_sum * current_hour
     else:
-        total_target = 0
+        upto_now_target = 0
 
-    hourly_cols = [str(i) for i in range(1, 10) if str(i) in raw_df.columns]
-    actual_sum = 0
-    for col in hourly_cols:
-        actual_sum += pd.to_numeric(raw_df[col], errors='coerce').fillna(0).sum()
-    
-    total_actual = actual_sum
-    overall_eff = (total_actual / total_target * 100) if total_target > 0 else 0.0
+    upto_now_actual = 0
+    for h in range(1, current_hour + 1):
+        col = str(h)
+        if col in raw_df.columns:
+            upto_now_actual += pd.to_numeric(raw_df[col], errors='coerce').fillna(0).sum()
 
-    # Top KPI Metrics Display
+    p2p_pct = (upto_now_actual / upto_now_target * 100) if upto_now_target > 0 else 0.0
+
+    # Top KPI Metrics Display (Up to Now)
     col1, col2, col3 = st.columns(3)
-    col1.metric("Total Target Output", f"{int(total_target):,} Pcs")
-    col2.metric("Total Actual Output", f"{int(total_actual):,} Pcs")
-    col3.metric("Plant Efficiency", f"{overall_eff:.1f}%")
+    col1.metric(f"Target Output (Up to Hr {current_hour})", f"{int(upto_now_target):,} Pcs")
+    col2.metric(f"Actual Output (Up to Hr {current_hour})", f"{int(upto_now_actual):,} Pcs")
+    col3.metric("Up to now P2P", f"{p2p_pct:.1f}%")
 
     st.divider()
     st.subheader("📋 Module Wise Hourly Production Table")
