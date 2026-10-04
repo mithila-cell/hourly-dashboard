@@ -5,7 +5,7 @@ import os
 # Page Configuration
 st.set_page_config(page_title="GIZA Hourly Production Dashboard", layout="wide")
 
-# Mobile Responsive Compact Table CSS Style
+# Custom CSS for Mobile Split Cell Standard Layout
 st.markdown("""
     <style>
         .mobile-table-container {
@@ -17,30 +17,59 @@ st.markdown("""
             width: 100%;
             border-collapse: collapse;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            font-size: 10px;
+            font-size: 11px;
             text-align: center;
         }
-        .mobile-table th, .mobile-table td {
-            padding: 4px 2px !important;
-            border: 1px solid #e0e0e0;
-            white-space: nowrap;
-        }
         .mobile-table th {
-            background-color: #f8f9fa;
-            color: #333;
-            font-weight: bold;
-            font-size: 9px;
+            background-color: #333;
+            color: #fff;
+            padding: 6px 2px !important;
+            border: 1px solid #444;
+            white-space: nowrap;
+            font-size: 10px;
             line-height: 1.1;
         }
-        .pass-cell {
-            background-color: #c8e6c9 !important;
-            color: #1b5e20 !important;
-            font-weight: bold;
+        .mobile-table td {
+            padding: 0px !important;
+            border: 1px solid #ccc;
+            vertical-align: middle;
         }
-        .fail-cell {
-            background-color: #ffcdd2 !important;
-            color: #b71c1c !important;
+        
+        /* Split Cell Layout Style */
+        .split-cell {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            min-width: 28px;
+        }
+        .target-box {
+            background-color: #00a65a; /* Green Target Top */
+            color: #ffffff;
             font-weight: bold;
+            font-size: 10px;
+            padding: 2px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+        }
+        .actual-box-pass {
+            background-color: #00a65a; /* Green Actual Bottom */
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 11px;
+            padding: 2px 0;
+        }
+        .actual-box-fail {
+            background-color: #ff0000; /* Red Actual Bottom */
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 11px;
+            padding: 2px 0;
+        }
+        
+        .plain-td {
+            padding: 4px 2px !important;
+            font-weight: bold;
+            font-size: 11px;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -111,7 +140,7 @@ try:
     st.divider()
     st.subheader("📋 Module Wise Hourly Production Table")
 
-    # Mobile Compact HTML Table නිර්මාණය කිරීම
+    # Split-Cell HTML Table Generation
     html_table = """
     <div class="mobile-table-container">
     <table class="mobile-table">
@@ -131,14 +160,14 @@ try:
     for idx, row in raw_df.iterrows():
         html_table += "<tr>"
         
-        # Line No දශම අයින් කර ශුද්ධ අංකය ගැනීම
+        # Line No cleaning
         line_val = row.get('Line No', row.get('MODULE', ''))
         try:
             line_str = str(int(float(line_val))) if pd.notna(line_val) and str(line_val).strip() != '' else ''
         except:
             line_str = str(line_val) if pd.notna(line_val) else ''
             
-        html_table += f"<td><b>{line_str}</b></td>"
+        html_table += f"<td class='plain-td'>{line_str}</td>"
         
         # Day Forecast
         df_val = row.get('Day Forecast', '')
@@ -146,9 +175,9 @@ try:
             df_str = str(int(float(df_val))) if pd.notna(df_val) and str(df_val).strip() != '' else ''
         except:
             df_str = ''
-        html_table += f"<td>{df_str}</td>"
+        html_table += f"<td class='plain-td'>{df_str}</td>"
         
-        # Hourly Forecast
+        # Hourly Forecast (Target)
         hf_val = row.get('Hourly Forecast', '')
         try:
             target_val = float(hf_val) if pd.notna(hf_val) and str(hf_val).strip() != '' else 0
@@ -156,26 +185,32 @@ try:
         except:
             target_val = 0
             hf_str = ''
-        html_table += f"<td>{hf_str}</td>"
+        html_table += f"<td class='plain-td'>{hf_str}</td>"
 
-        # Hours 1 to 9
+        # Hours 1 to 9 (Split Cell Logic)
         for h in range(1, 10):
             val = row.get(str(h), '')
-            cell_class = ""
-            val_str = ""
             if pd.notna(val) and str(val).strip() != '' and str(val).lower() != 'nan':
                 try:
                     act_val = float(val)
-                    val_str = str(int(act_val))
-                    if target_val > 0:
-                        if act_val >= target_val:
-                            cell_class = "pass-cell"
-                        else:
-                            cell_class = "fail-cell"
+                    act_str = str(int(act_val))
+                    
+                    # Actual >= Target -> Green else Red
+                    actual_class = "actual-box-pass" if (target_val > 0 and act_val >= target_val) else "actual-box-fail"
+                    target_str = str(int(target_val)) if target_val > 0 else "-"
+                    
+                    cell_html = f"""
+                    <div class="split-cell">
+                        <div class="target-box">{target_str}</div>
+                        <div class="{actual_class}">{act_str}</div>
+                    </div>
+                    """
                 except:
-                    val_str = str(val)
+                    cell_html = str(val)
+            else:
+                cell_html = ""
             
-            html_table += f"<td class='{cell_class}'>{val_str}</td>"
+            html_table += f"<td>{cell_html}</td>"
 
         # TOTAL
         tot_val = row.get('TOTAL', '')
@@ -183,7 +218,7 @@ try:
             tot_str = str(int(float(tot_val))) if pd.notna(tot_val) and str(tot_val).strip() != '' and str(tot_val).lower() != 'nan' else ''
         except:
             tot_str = ''
-        html_table += f"<td><b>{tot_str}</b></td>"
+        html_table += f"<td class='plain-td'>{tot_str}</td>"
         html_table += "</tr>"
 
     html_table += "</tbody></table></div>"
