@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 
 # Page Configuration
 st.set_page_config(page_title="Hourly Production Dashboard", layout="wide")
@@ -14,24 +13,21 @@ SHEET_URL = "https://docs.google.com/spreadsheets/d/18YQkUYI-GQz24ImIIdm4vmB_JYB
 @st.cache_data(ttl=30)
 def load_data():
     df = pd.read_csv(SHEET_URL)
-    # None / NaN වෙනුවට හිස් අගයන් හෝ 0 යෙදීම
-    df = df.fillna("")
     return df
 
 try:
-    df = load_data()
+    raw_df = load_data()
 
-    # Total Target & Actual සෙවීම (Day Forecast සහ 1-9 පැයවල එකතුවෙන්)
-    if 'Day Forecast' in df.columns:
-        total_target = pd.to_numeric(df['Day Forecast'], errors='coerce').sum()
+    # KPI Calculations (ගණනය කිරීම් සඳහා මුල් Data වෙනම ලබා ගැනීම)
+    if 'Day Forecast' in raw_df.columns:
+        total_target = pd.to_numeric(raw_df['Day Forecast'], errors='coerce').sum()
     else:
         total_target = 0
 
-    # පැය 1 සිට 9 දක්වා එකතුව (Actual Output)
-    hourly_cols = [str(i) for i in range(1, 10) if str(i) in df.columns]
+    hourly_cols = [str(i) for i in range(1, 10) if str(i) in raw_df.columns]
     actual_sum = 0
     for col in hourly_cols:
-        actual_sum += pd.to_numeric(df[col], errors='coerce').fillna(0).sum()
+        actual_sum += pd.to_numeric(raw_df[col], errors='coerce').fillna(0).sum()
     
     total_actual = actual_sum
     overall_eff = (total_actual / total_target * 100) if total_target > 0 else 0.0
@@ -45,22 +41,35 @@ try:
     st.divider()
     st.subheader("📋 Module Wise Hourly Production Table")
 
+    # Display එක සඳහා දශම ස්ථාන ඉවත් කිරීම සහ Clean කිරීම
+    display_df = raw_df.copy()
+    
+    for col in display_df.columns:
+        # MODULE තීරුව හැර අනිත් සියලු තීරුවල දශම ඉවත් කිරීම
+        if col != 'MODULE':
+            def clean_val(val):
+                if pd.isna(val) or str(val).strip() in ['', 'None', 'nan']:
+                    return ''
+                try:
+                    return str(int(float(val)))
+                except (ValueError, TypeError):
+                    return str(val)
+            display_df[col] = display_df[col].apply(clean_val)
+
     # Conditional Formatting Function
     def highlight_hourly(row):
         styles = [''] * len(row)
-        # Target එක ලෙස 'Hourly Forecast' ලබා ගැනීම
-        target = row.get('Hourly Forecast', 0)
+        target = row.get('Hourly Forecast', '')
         
         try:
-            target_val = float(target)
+            target_val = float(target) if target != '' else 0
         except (ValueError, TypeError):
             target_val = 0
 
         for i, col in enumerate(row.index):
-            # 1 සිට 9 දක්වා පැය තීරූ සසඳා පාට කිරීම
             if str(col) in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
                 val_str = str(row[col]).strip()
-                if val_str != "" and val_str != "None":
+                if val_str != '':
                     try:
                         actual_val = float(val_str)
                         if target_val > 0:
@@ -73,7 +82,7 @@ try:
         return styles
 
     # Table Display
-    st.dataframe(df.style.apply(highlight_hourly, axis=1), use_container_width=True)
+    st.dataframe(display_df.style.apply(highlight_hourly, axis=1), use_container_width=True)
 
 except Exception as e:
     st.error(f"Data Load කිරීමේදී දෝෂයක් සිදු විය: {e}")
