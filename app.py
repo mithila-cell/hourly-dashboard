@@ -8,10 +8,9 @@ st.set_page_config(
     layout="wide"
 )
 
-# Mobile Ready Compact CSS
+# Responsive Mobile Compact CSS
 st.markdown("""
 <style>
-    /* Remove padding around main container for mobile */
     .block-container {
         padding-top: 0.5rem !important;
         padding-bottom: 0.5rem !important;
@@ -19,7 +18,16 @@ st.markdown("""
         padding-right: 0.2rem !important;
     }
     
-    /* Responsive Mobile Table Styling */
+    .main-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: #1E3A8A;
+        text-align: center;
+        margin-top: 5px;
+        margin-bottom: 12px;
+        line-height: 1.2;
+    }
+    
     .table-container {
         width: 100%;
         overflow-x: auto;
@@ -48,13 +56,17 @@ st.markdown("""
         white-space: nowrap;
     }
     
-    /* Cell Colors */
+    /* Cell Status Colors */
     .pass-cell {
         background-color: #22C55E !important;
         color: white !important;
     }
     .fail-cell {
         background-color: #EF4444 !important;
+        color: white !important;
+    }
+    .yellow-cell {
+        background-color: #EAB308 !important;
         color: white !important;
     }
     .neutral-cell {
@@ -69,17 +81,22 @@ st.markdown("""
         font-size: 10px;
     }
 
-    /* Target small mobile screens */
     @media (max-width: 600px) {
+        .main-title {
+            font-size: 15px;
+        }
         .styled-table {
-            font-size: 10px;
+            font-size: 9px;
         }
         .styled-table th, .styled-table td {
-            padding: 3px 1px;
+            padding: 2px 1px;
         }
     }
 </style>
 """, unsafe_allow_html=True)
+
+# Main Title Display
+st.markdown('<div class="main-title">GIZA Plant 2 - Hourly Production Monitoring Dashboard</div>', unsafe_allow_html=True)
 
 SHEET_URL = "https://docs.google.com/spreadsheets/d/18YQkUYI-GQz24ImIIdm4vmB_JYBmNKIxDsgdWyJ0ehQ/export?format=csv"
 
@@ -98,18 +115,15 @@ if not df_raw.empty:
     df_raw.columns = [str(col).strip() for col in df_raw.columns]
     df = df_raw.copy()
     
-    # Fill missing PM values vertically
     if 'PM' in df.columns:
         df['PM'] = df['PM'].ffill()
 
-    # Clean Line No - Preserve numbers, strings like 'PLANT 2', and empty rows
     if 'Line No' in df.columns:
         df['Line No Clean'] = df['Line No'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
         df['Line No Clean'] = df['Line No Clean'].replace('nan', '')
     else:
         df['Line No Clean'] = ''
 
-    # Exclude completely blank rows
     df = df[df['PM'].notna() & (df['PM'] != '')]
 
     hours = [str(h) for h in range(1, 9)]
@@ -164,9 +178,15 @@ if not df_raw.empty:
                 except (ValueError, TypeError):
                     cell_text = str(actual_val)
 
-            # Color logic (Pass if Actual >= Forecast, else Fail)
+            # Color Logic:
+            # 1. අගයක් නැතිනම් (-) -> Neutral
+            # 2. Hourly Forecast එක 0 නම් -> Yellow (කහ)
+            # 3. Actual >= Forecast නම් -> Green (කොළ)
+            # 4. Actual < Forecast නම් -> Red (රතු)
             if cell_text == "-":
                 cell_class = "neutral-cell"
+            elif hr_fc == 0:
+                cell_class = "yellow-cell"
             else:
                 try:
                     act_num = float(actual_val)
