@@ -112,7 +112,7 @@ try:
     col3.metric("Up to now P2P", f"{p2p_pct:.1f}%")
 
     st.divider()
-    st.subheader("📋 Module Wise Hourly Production Table")
+    st.subheader("📋 Line Wise Hourly Production Output")
 
     # Clean Mobile HTML Table Generation (Hours 1 to 8)
     html_table = """
