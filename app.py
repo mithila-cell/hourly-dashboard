@@ -110,16 +110,15 @@ try:
                         pass
         return styles
 
-    # Column Widths Dynamic Config
+    # මාතෘකා උඩ-යට පේළි 2කට කඩා Column Width එක අඩු කිරීම
     col_config = {
-        "Line No": st.column_config.Column("Line No", width="small"),
-        "MODULE": st.column_config.Column("MODULE", width="small"),
-        "Day Forecast": st.column_config.Column("Day Forecast", width="small"),
-        "Hourly Forecast": st.column_config.Column("Hourly Forecast", width="small"),
+        "Line No": st.column_config.Column("Line\nNo", width="small"),
+        "MODULE": st.column_config.Column("Module", width="small"),
+        "Day Forecast": st.column_config.Column("Day\nForecast", width="small"),
+        "Hourly Forecast": st.column_config.Column("Hourly\nForecast", width="small"),
         "TOTAL": st.column_config.Column("TOTAL", width="small")
     }
     
-    # 1 සිට 9 දක්වා පැය තීරුවල Size එකත් Small කිරීම
     for i in range(1, 10):
         col_config[str(i)] = st.column_config.Column(str(i), width="small")
 
