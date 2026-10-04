@@ -1,14 +1,14 @@
 import streamlit as st
 import pandas as pd
 
-# Page config
+# Page config - Title එක නිවැරදි කර ඇත
 st.set_page_config(
     page_title="GIZA Plant 2 - Hourly Production Monitoring Dashboard",
     page_icon="📊",
     layout="wide"
 )
 
-# Custom CSS for styling and HTML Table single-cell presentation
+# Custom CSS styling
 st.markdown("""
 <style>
     .main-title {
@@ -66,6 +66,12 @@ st.markdown("""
         background-color: #F8FAFC;
         color: #0F172A;
     }
+    .pm-cell {
+        background-color: #E2E8F0;
+        color: #0F172A;
+        vertical-align: middle;
+        font-weight: bold;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -87,25 +93,19 @@ def load_data():
 df_raw = load_data()
 
 if not df_raw.empty:
-    # Clean Column names
     df_raw.columns = [str(col).strip() for col in df_raw.columns]
-    
     df = df_raw.copy()
     
-    # Fill missing PM names vertically down (Sheet එකේ තියෙන පිළිවෙලම තබා ගැනීමට)
+    # Fill missing PM values vertically
     if 'PM' in df.columns:
         df['PM'] = df['PM'].ffill()
 
-    # Clean 'Line No' column safely
+    # Clean Line No
     df['Line No Clean'] = df['Line No'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
-    
-    # Exclude non-numeric summary rows (like PLANT 2)
     df = df[df['Line No Clean'].str.contains(r'^\d+$', na=False)]
 
-    # Hours 1 to 8 list
     hours = [str(h) for h in range(1, 9)]
     
-    # Build HTML Table
     html = '<table class="styled-table"><thead><tr>'
     html += '<th>PM</th>'
     html += '<th>Line No</th>'
@@ -115,6 +115,10 @@ if not df_raw.empty:
     for h in hours:
         html += f'<th>Hour {h}</th>'
     html += '</tr></thead><tbody>'
+
+    # PM එකට අදාළ Lines ගණන ගණනය කිරීම (Merge කිරීම සඳහා)
+    pm_counts = df['PM'].value_counts(sort=False)
+    seen_pms = set()
 
     for _, row in df.iterrows():
         pm_val = str(row.get('PM', ''))
@@ -128,7 +132,13 @@ if not df_raw.empty:
             hr_fc = 0.0
 
         html += f'<tr>'
-        html += f'<td class="neutral-cell">{pm_val}</td>'
+        
+        # PM කෙනෙකුගේ නම පටන් ගන්නා විට පමණක් Rowspan එකක් දමා Merge කිරීම
+        if pm_val not in seen_pms:
+            rowspan = pm_counts.get(pm_val, 1)
+            html += f'<td class="pm-cell" rowspan="{rowspan}">{pm_val}</td>'
+            seen_pms.add(pm_val)
+
         html += f'<td class="neutral-cell">{line_val}</td>'
         html += f'<td class="neutral-cell">{day_fc}</td>'
         html += f'<td class="neutral-cell">{hr_fc_val}</td>'
@@ -136,7 +146,6 @@ if not df_raw.empty:
         for h in hours:
             actual_val = row.get(h, None)
             
-            # Formatting value
             if pd.isna(actual_val) or str(actual_val).strip() == "":
                 cell_text = "-"
             else:
