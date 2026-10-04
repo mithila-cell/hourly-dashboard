@@ -1,25 +1,25 @@
 import streamlit as st
 import pandas as pd
 
-# Page config - Title එක කලින් තිබුණු නමට වෙනස් කර ඇත
+# Page config
 st.set_page_config(
-    page_title="GIZA - Hourly Production Monitoring Dashboard",
+    page_title="GIZA Plant 2 - Hourly Production Monitoring Dashboard",
     page_icon="📊",
     layout="wide"
 )
 
-# Custom CSS styling
+# Custom CSS for styling and HTML Table single-cell presentation
 st.markdown("""
 <style>
     .main-title {
-        font-size: 28px;
+        font-size: 26px;
         font-weight: bold;
         color: #1E3A8A;
         text-align: center;
         margin-bottom: 5px;
     }
     .sub-title {
-        font-size: 20px;
+        font-size: 18px;
         font-weight: 600;
         color: #2563EB;
         text-align: center;
@@ -69,7 +69,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="main-title">MITHILA CELL PRODUCTION DASHBOARD</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">GIZA Plant 2 - Hourly Production Monitoring Dashboard</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Line Wise Hourly Production Output</div>', unsafe_allow_html=True)
 
 # Public Google Sheet CSV Link
@@ -92,7 +92,7 @@ if not df_raw.empty:
     
     df = df_raw.copy()
     
-    # Fill missing PM names vertically down
+    # Fill missing PM names vertically down (Sheet එකේ තියෙන පිළිවෙලම තබා ගැනීමට)
     if 'PM' in df.columns:
         df['PM'] = df['PM'].ffill()
 
@@ -101,10 +101,6 @@ if not df_raw.empty:
     
     # Exclude non-numeric summary rows (like PLANT 2)
     df = df[df['Line No Clean'].str.contains(r'^\d+$', na=False)]
-
-    # Sort numerically by Line No
-    df['Line No Int'] = df['Line No Clean'].astype(int)
-    df = df.sort_values(by='Line No Int')
 
     # Hours 1 to 8 list
     hours = [str(h) for h in range(1, 9)]
