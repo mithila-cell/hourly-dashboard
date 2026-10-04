@@ -7,8 +7,8 @@ st.set_page_config(page_title="Hourly Production Dashboard", layout="wide")
 st.title("🏭 Hourly Production Live Dashboard")
 st.caption("Google Sheets හා සම්බන්ධිත සජීවී Production Tracker එක")
 
-# Google Sheet CSV Link
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1X3M4S_66E39v9u9lO1V5g8wR8N-Xj9_w-13uLw7-d3s/export?format=csv"
+# ඔබේ Google Sheet CSV Link එක (YOUR_SHEET_ID එක වෙනස් කරන්න)
+SHEET_URL = "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/export?format=csv"
 
 @st.cache_data(ttl=60)
 def load_data():
@@ -31,7 +31,7 @@ try:
     st.divider()
     st.subheader("📋 Module Wise Hourly Production Table")
 
-    # Conditional Formatting Function
+    # Conditional Formatting Function (Target එකට වඩා වැඩි නම් කොළ / අඩු නම් රතු)
     def highlight_hourly(row):
         styles = [''] * len(row)
         target = row.get('HOURLY PCS', 0)
@@ -47,14 +47,14 @@ try:
                     actual_val = float(row[col])
                     if target_val > 0:
                         if actual_val >= target_val:
-                            styles[i] = 'background-color: #c8e6c9; color: #1b5e20; font-weight: bold;' # Green
+                            styles[i] = 'background-color: #c8e6c9; color: #1b5e20; font-weight: bold;' # කොළ පාට
                         else:
-                            styles[i] = 'background-color: #ffcdd2; color: #b71c1c; font-weight: bold;' # Red
+                            styles[i] = 'background-color: #ffcdd2; color: #b71c1c; font-weight: bold;' # රතු පාට
                 except (ValueError, TypeError):
                     pass
         return styles
 
-    # Display Styled Table
+    # Table Display
     st.dataframe(df.style.apply(highlight_hourly, axis=1), use_container_width=True)
 
 except Exception as e:
