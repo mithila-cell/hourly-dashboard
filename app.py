@@ -11,9 +11,9 @@ st.set_page_config(
 # Custom Styling
 st.markdown("""
 <style>
-    /* Add enough space at the top so title won't get cut off */
+    /* Adjust top container spacing to prevent Streamlit header overlap */
     .block-container {
-        padding-top: 2rem !important;
+        padding-top: 3.5rem !important;
         padding-bottom: 0.5rem !important;
         padding-left: 0.5rem !important;
         padding-right: 0.5rem !important;
@@ -24,6 +24,7 @@ st.markdown("""
         font-weight: bold;
         color: #1E3A8A;
         text-align: center;
+        margin-top: 10px;
         margin-bottom: 15px;
         line-height: 1.3;
     }
