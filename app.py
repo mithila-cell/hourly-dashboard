@@ -1,55 +1,69 @@
 import streamlit as st
 import pandas as pd
 
-# Page config - Title එක නිවැරදි කර ඇත
+# Page config
 st.set_page_config(
     page_title="GIZA Plant 2 - Hourly Production Monitoring Dashboard",
     page_icon="📊",
     layout="wide"
 )
 
-# Custom CSS styling
+# Mobile Ready Compact CSS
 st.markdown("""
 <style>
+    /* Remove padding around main container for mobile */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+        padding-left: 0.2rem !important;
+        padding-right: 0.2rem !important;
+    }
+    
     .main-title {
-        font-size: 26px;
+        font-size: 18px;
         font-weight: bold;
         color: #1E3A8A;
         text-align: center;
-        margin-bottom: 5px;
+        margin-bottom: 2px;
     }
     .sub-title {
-        font-size: 18px;
+        font-size: 13px;
         font-weight: 600;
         color: #2563EB;
         text-align: center;
-        margin-bottom: 25px;
+        margin-bottom: 10px;
     }
     
-    /* Table Styling */
+    /* Responsive Mobile Table Styling */
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+    }
     .styled-table {
         width: 100%;
         border-collapse: collapse;
         font-family: Arial, sans-serif;
-        font-size: 14px;
-        margin-top: 10px;
+        font-size: 11px; /* Smaller text for mobile fit */
+        table-layout: auto;
     }
     .styled-table th {
         background-color: #1E293B;
         color: white;
-        padding: 10px 6px;
+        padding: 4px 2px; /* Ultra compact padding */
         text-align: center;
         border: 1px solid #334155;
         font-weight: bold;
+        white-space: nowrap;
     }
     .styled-table td {
-        padding: 8px 6px;
+        padding: 4px 2px;
         text-align: center;
         border: 1px solid #CBD5E1;
         font-weight: bold;
+        white-space: nowrap;
     }
     
-    /* Cell Status Colors */
+    /* Cell Colors */
     .pass-cell {
         background-color: #22C55E !important;
         color: white !important;
@@ -71,6 +85,17 @@ st.markdown("""
         color: #0F172A;
         vertical-align: middle;
         font-weight: bold;
+        font-size: 10px;
+    }
+
+    /* Target small screens */
+    @media (max-width: 600px) {
+        .styled-table {
+            font-size: 10px;
+        }
+        .styled-table th, .styled-table td {
+            padding: 3px 1px;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -78,7 +103,6 @@ st.markdown("""
 st.markdown('<div class="main-title">GIZA Plant 2 - Hourly Production Monitoring Dashboard</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Line Wise Hourly Production Output</div>', unsafe_allow_html=True)
 
-# Public Google Sheet CSV Link
 SHEET_URL = "https://docs.google.com/spreadsheets/d/18YQkUYI-GQz24ImIIdm4vmB_JYBmNKIxDsgdWyJ0ehQ/export?format=csv"
 
 @st.cache_data(ttl=10)
@@ -96,27 +120,24 @@ if not df_raw.empty:
     df_raw.columns = [str(col).strip() for col in df_raw.columns]
     df = df_raw.copy()
     
-    # Fill missing PM values vertically
     if 'PM' in df.columns:
         df['PM'] = df['PM'].ffill()
 
-    # Clean Line No
     df['Line No Clean'] = df['Line No'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
     df = df[df['Line No Clean'].str.contains(r'^\d+$', na=False)]
 
     hours = [str(h) for h in range(1, 9)]
     
-    html = '<table class="styled-table"><thead><tr>'
+    html = '<div class="table-container"><table class="styled-table"><thead><tr>'
     html += '<th>PM</th>'
-    html += '<th>Line No</th>'
-    html += '<th>Day Forecast</th>'
-    html += '<th>Hourly Forecast</th>'
+    html += '<th>Line</th>'
+    html += '<th>Day FC</th>'
+    html += '<th>Hr FC</th>'
     
     for h in hours:
-        html += f'<th>Hour {h}</th>'
+        html += f'<th>H{h}</th>'
     html += '</tr></thead><tbody>'
 
-    # PM එකට අදාළ Lines ගණන ගණනය කිරීම (Merge කිරීම සඳහා)
     pm_counts = df['PM'].value_counts(sort=False)
     seen_pms = set()
 
@@ -133,7 +154,6 @@ if not df_raw.empty:
 
         html += f'<tr>'
         
-        # PM කෙනෙකුගේ නම පටන් ගන්නා විට පමණක් Rowspan එකක් දමා Merge කිරීම
         if pm_val not in seen_pms:
             rowspan = pm_counts.get(pm_val, 1)
             html += f'<td class="pm-cell" rowspan="{rowspan}">{pm_val}</td>'
@@ -155,7 +175,6 @@ if not df_raw.empty:
                 except (ValueError, TypeError):
                     cell_text = str(actual_val)
 
-            # Color logic
             if hr_fc == 0:
                 cell_class = "yellow-cell"
             elif cell_text == "-":
@@ -174,7 +193,7 @@ if not df_raw.empty:
 
         html += '</tr>'
 
-    html += 'tbody></table>'
+    html += 'tbody></table></div>'
     
     st.markdown(html, unsafe_allow_html=True)
     
