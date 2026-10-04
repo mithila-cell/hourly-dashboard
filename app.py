@@ -1,199 +1,172 @@
 import streamlit as st
 import pandas as pd
-import os
 
-# Page Configuration
-st.set_page_config(page_title="GIZA Hourly Production Dashboard - Plant 2", layout="wide")
+# Page config
+st.set_page_config(
+    page_title="Mithila Cell - Production Dashboard",
+    page_icon="📊",
+    layout="wide"
+)
 
-# Custom CSS for Mobile Responsive Single-Cell Table
+# Custom CSS for styling and HTML Table single-cell presentation
 st.markdown("""
-    <style>
-        .mobile-table-container {
-            width: 100%;
-            max-width: 850px;
-            margin: 10px auto;
-            overflow-x: auto;
-        }
-        .mobile-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            font-size: 11px;
-            text-align: center;
-        }
-        .mobile-table th {
-            background-color: #333;
-            color: #fff;
-            padding: 6px 3px !important;
-            border: 1px solid #444;
-            white-space: nowrap;
-            font-size: 10px;
-            line-height: 1.1;
-        }
-        .mobile-table td {
-            padding: 6px 3px !important;
-            border: 1px solid #ccc;
-            font-weight: bold;
-            font-size: 11px;
-            vertical-align: middle;
-        }
-        .pass-cell {
-            background-color: #00a65a !important; /* Bold Green */
-            color: #ffffff !important;
-        }
-        .fail-cell {
-            background-color: #ff0000 !important; /* Bold Red */
-            color: #ffffff !important;
-        }
-    </style>
+<style>
+    .main-title {
+        font-size: 28px;
+        font-weight: bold;
+        color: #1E3A8A;
+        text-align: center;
+        margin-bottom: 5px;
+    }
+    .sub-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #2563EB;
+        text-align: center;
+        margin-bottom: 25px;
+    }
+    
+    /* Table Styling */
+    .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        margin-top: 10px;
+    }
+    .styled-table th {
+        background-color: #1E293B;
+        color: white;
+        padding: 10px 6px;
+        text-align: center;
+        border: 1px solid #334155;
+        font-weight: bold;
+    }
+    .styled-table td {
+        padding: 8px 6px;
+        text-align: center;
+        border: 1px solid #CBD5E1;
+        font-weight: bold;
+    }
+    
+    /* Cell Status Colors */
+    .pass-cell {
+        background-color: #22C55E !important;
+        color: white !important;
+    }
+    .fail-cell {
+        background-color: #EF4444 !important;
+        color: white !important;
+    }
+    .yellow-cell {
+        background-color: #EAB308 !important;
+        color: white !important;
+    }
+    .neutral-cell {
+        background-color: #F8FAFC;
+        color: #0F172A;
+    }
+</style>
 """, unsafe_allow_html=True)
 
-# Logo Display Logic
-logo_col1, logo_col2, title_col = st.columns([1, 1, 4])
+st.markdown('<div class="main-title">MITHILA CELL PRODUCTION DASHBOARD</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title">Line Wise Hourly Production Output</div>', unsafe_allow_html=True)
 
-with logo_col1:
-    for filename in ["GizaCo-Logo.jpg", "GizaCo-Logo.png", "GizaCo-Logo.jpeg", "giza.png", "giza.jpg"]:
-        if os.path.exists(filename):
-            st.image(filename, width=100)
-            break
-
-with logo_col2:
-    for filename in ["HIJ LOGO.png", "HIJ LOGO.jpg", "HIJ LOGO.jpeg", "hij.png", "hij.jpg"]:
-        if os.path.exists(filename):
-            st.image(filename, width=100)
-            break
-
-with title_col:
-    st.title("GIZA Hourly Production Dashboard")
-
-st.divider()
-
-# Google Sheet CSV Link
+# Public Google Sheet CSV Link
 SHEET_URL = "https://docs.google.com/spreadsheets/d/18YQkUYI-GQz24ImIIdm4vmB_JYBmNKIxDsgdWyJ0ehQ/export?format=csv"
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=10)
 def load_data():
-    df = pd.read_csv(SHEET_URL)
-    return df
+    try:
+        df = pd.read_csv(SHEET_URL)
+        return df
+    except Exception as e:
+        st.error(f"Error loading Google Sheet: {e}")
+        return pd.DataFrame()
 
-try:
-    raw_df = load_data()
+df_raw = load_data()
 
-    # Active hours calculation (1 to 8 only)
-    active_hours = []
-    for h in range(1, 9):
-        col = str(h)
-        if col in raw_df.columns:
-            has_data = pd.to_numeric(raw_df[col], errors='coerce').notna().any()
-            if has_data:
-                active_hours.append(h)
+if not df_raw.empty:
+    # Clean Column names
+    df_raw.columns = [str(col).strip() for col in df_raw.columns]
+    
+    df = df_raw.copy()
+    
+    # Convert 'Line No' column safely
+    df['Line No Clean'] = df['Line No'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+    
+    # Exclude non-numeric summary rows
+    df = df[df['Line No Clean'].str.contains(r'^\d+$', na=False)]
 
-    current_hour = max(active_hours) if active_hours else 0
+    # Hours 1 to 8 list
+    hours = [str(h) for h in range(1, 9)]
+    
+    # Build HTML Table
+    html = '<table class="styled-table"><thead><tr>'
+    html += '<th>PM</th>'
+    html += '<th>Line No</th>'
+    html += '<th>Day Forecast</th>'
+    html += '<th>Hourly Forecast</th>'
+    
+    for h in hours:
+        html += f'<th>Hour {h}</th>'
+    html += '</tr></thead><tbody>'
 
-    # Up to Now Target & Actual Calculations
-    if current_hour > 0 and 'Hourly Forecast' in raw_df.columns:
-        hourly_target_sum = pd.to_numeric(raw_df['Hourly Forecast'], errors='coerce').fillna(0).sum()
-        upto_now_target = hourly_target_sum * current_hour
-    else:
-        upto_now_target = 0
-
-    upto_now_actual = 0
-    for h in range(1, current_hour + 1):
-        col = str(h)
-        if col in raw_df.columns:
-            upto_now_actual += pd.to_numeric(raw_df[col], errors='coerce').fillna(0).sum()
-
-    p2p_pct = (upto_now_actual / upto_now_target * 100) if upto_now_target > 0 else 0.0
-
-    # Top KPI Metrics Display
-    col1, col2, col3 = st.columns(3)
-    col1.metric(f"Target Output (Up to Hr {current_hour})", f"{int(upto_now_target):,} Pcs")
-    col2.metric(f"Actual Output (Up to Hr {current_hour})", f"{int(upto_now_actual):,} Pcs")
-    col3.metric("Up to now P2P", f"{p2p_pct:.1f}%")
-
-    st.divider()
-    st.subheader("📋 Line Wise Hourly Production Output")
-
-    # Clean Mobile HTML Table Generation (Hours 1 to 8)
-    html_table = """
-    <div class="mobile-table-container">
-    <table class="mobile-table">
-        <thead>
-            <tr>
-                <th>Line<br>No</th>
-                <th>Day<br>Fcst</th>
-                <th>Hr<br>Fcst</th>
-                <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
-                <th>6</th><th>7</th><th>8</th>
-                <th>Total</th>
-            </tr>
-        </thead>
-        <tbody>
-    """
-
-    for idx, row in raw_df.iterrows():
-        html_table += "<tr>"
+    for _, row in df.iterrows():
+        pm_val = str(row.get('PM', ''))
+        line_val = row.get('Line No Clean', '')
+        day_fc = str(row.get('Day Forecast', '0'))
+        hr_fc_val = row.get('Hourly Forecast', 0)
         
-        # Line No cleaning
-        line_val = row.get('Line No', row.get('MODULE', ''))
         try:
-            line_str = str(int(float(line_val))) if pd.notna(line_val) and str(line_val).strip() != '' else ''
-        except:
-            line_str = str(line_val) if pd.notna(line_val) else ''
+            hr_fc = float(hr_fc_val)
+        except (ValueError, TypeError):
+            hr_fc = 0.0
+
+        html += f'<tr>'
+        html += f'<td class="neutral-cell">{pm_val}</td>'
+        html += f'<td class="neutral-cell">{line_val}</td>'
+        html += f'<td class="neutral-cell">{day_fc}</td>'
+        html += f'<td class="neutral-cell">{hr_fc_val}</td>'
+
+        for h in hours:
+            actual_val = row.get(h, None)
             
-        html_table += f"<td>{line_str}</td>"
-        
-        # Day Forecast
-        df_val = row.get('Day Forecast', '')
-        try:
-            df_str = str(int(float(df_val))) if pd.notna(df_val) and str(df_val).strip() != '' else ''
-        except:
-            df_str = ''
-        html_table += f"<td>{df_str}</td>"
-        
-        # Hourly Forecast (Target)
-        hf_val = row.get('Hourly Forecast', '')
-        try:
-            target_val = float(hf_val) if pd.notna(hf_val) and str(hf_val).strip() != '' else 0
-            hf_str = str(int(target_val)) if target_val > 0 else ''
-        except:
-            target_val = 0
-            hf_str = ''
-        html_table += f"<td>{hf_str}</td>"
-
-        # Hours 1 to 8 (Single Cell with Target Comparison Color)
-        for h in range(1, 9):
-            val = row.get(str(h), '')
-            cell_class = ""
-            val_str = ""
-            
-            if pd.notna(val) and str(val).strip() != '' and str(val).lower() != 'nan':
+            # Formatting value
+            if pd.isna(actual_val) or str(actual_val).strip() == "":
+                cell_text = "-"
+            else:
                 try:
-                    act_val = float(val)
-                    val_str = str(int(act_val))
-                    
-                    if target_val > 0:
-                        if act_val >= target_val:
-                            cell_class = "pass-cell"
-                        else:
-                            cell_class = "fail-cell"
-                except:
-                    val_str = str(val)
-            
-            html_table += f"<td class='{cell_class}'>{val_str}</td>"
+                    act_num = float(actual_val)
+                    cell_text = f"{int(act_num)}" if act_num.is_integer() else f"{act_num}"
+                except (ValueError, TypeError):
+                    cell_text = str(actual_val)
 
-        # TOTAL
-        tot_val = row.get('TOTAL', '')
-        try:
-            tot_str = str(int(float(tot_val))) if pd.notna(tot_val) and str(tot_val).strip() != '' and str(tot_val).lower() != 'nan' else ''
-        except:
-            tot_str = ''
-        html_table += f"<td>{tot_str}</td>"
-        html_table += "</tr>"
+            # Color logic
+            if hr_fc == 0:
+                cell_class = "yellow-cell"
+            elif cell_text == "-":
+                cell_class = "neutral-cell"
+            else:
+                try:
+                    act_num = float(actual_val)
+                    if act_num >= hr_fc:
+                        cell_class = "pass-cell"
+                    else:
+                        cell_class = "fail-cell"
+                except (ValueError, TypeError):
+                    cell_class = "neutral-cell"
 
-    html_table += "</tbody></table></div>"
+            html += f'<td class="{cell_class}">{cell_text}</td>'
 
-    st.markdown(html_table, unsafe_allow_html=True)
+        html += '</tr>'
 
-except Exception as e:
-    st.error(f"Data Load කිරීමේදී දෝෂයක් සිදු විය: {e}")
+    html += 'tbody></table>'
+    
+    st.markdown(html, unsafe_allow_html=True)
+    
+    if st.button("🔄 Refresh Data"):
+        st.cache_data.clear()
+        st.rerun()
+else:
+    st.warning("No data found in Google Sheet.")
