@@ -5,7 +5,6 @@ import pandas as pd
 st.set_page_config(page_title="Hourly Production Dashboard", layout="wide")
 
 st.title("🏭 Hourly Production Live Dashboard")
-st.caption("Google Sheets හා සම්බන්ධිත සජීවී Production Tracker එක")
 
 # Google Sheet CSV Link
 SHEET_URL = "https://docs.google.com/spreadsheets/d/18YQkUYI-GQz24ImIIdm4vmB_JYBmNKIxDsgdWyJ0ehQ/export?format=csv"
@@ -18,7 +17,7 @@ def load_data():
 try:
     raw_df = load_data()
 
-    # KPI Calculations (ගණනය කිරීම් සඳහා මුල් Data වෙනම ලබා ගැනීම)
+    # KPI Calculations
     if 'Day Forecast' in raw_df.columns:
         total_target = pd.to_numeric(raw_df['Day Forecast'], errors='coerce').sum()
     else:
@@ -41,11 +40,10 @@ try:
     st.divider()
     st.subheader("📋 Module Wise Hourly Production Table")
 
-    # Display එක සඳහා දශම ස්ථාන ඉවත් කිරීම සහ Clean කිරීම
+    # Display එක සඳහා දශම ස්ථාන ඉවත් කිරීම
     display_df = raw_df.copy()
     
     for col in display_df.columns:
-        # MODULE තීරුව හැර අනිත් සියලු තීරුවල දශම ඉවත් කිරීම
         if col != 'MODULE':
             def clean_val(val):
                 if pd.isna(val) or str(val).strip() in ['', 'None', 'nan']:
