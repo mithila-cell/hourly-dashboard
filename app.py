@@ -36,19 +36,18 @@ def load_data():
 try:
     raw_df = load_data()
 
-    # 1 සිට 9 දක්වා Data ඇතුළත් කර ඇති අවසාන පැය (Current Hour) සොයා ගැනීම
+    # Active hours සොයා ගැනීම
     active_hours = []
     for h in range(1, 10):
         col = str(h)
         if col in raw_df.columns:
-            # හිස් නැති අගයන් තිබේදැයි පරීක්ෂා කිරීම
             has_data = pd.to_numeric(raw_df[col], errors='coerce').notna().any()
             if has_data:
                 active_hours.append(h)
 
     current_hour = max(active_hours) if active_hours else 0
 
-    # Up to Now Target & Actual Calculation
+    # Up to Now Target & Actual Calculations
     if current_hour > 0 and 'Hourly Forecast' in raw_df.columns:
         hourly_target_sum = pd.to_numeric(raw_df['Hourly Forecast'], errors='coerce').fillna(0).sum()
         upto_now_target = hourly_target_sum * current_hour
@@ -63,7 +62,7 @@ try:
 
     p2p_pct = (upto_now_actual / upto_now_target * 100) if upto_now_target > 0 else 0.0
 
-    # Top KPI Metrics Display (Up to Now)
+    # Top KPI Metrics Display
     col1, col2, col3 = st.columns(3)
     col1.metric(f"Target Output (Up to Hr {current_hour})", f"{int(upto_now_target):,} Pcs")
     col2.metric(f"Actual Output (Up to Hr {current_hour})", f"{int(upto_now_actual):,} Pcs")
@@ -72,11 +71,11 @@ try:
     st.divider()
     st.subheader("📋 Module Wise Hourly Production Table")
 
-    # Display clean-up (Remove decimals)
+    # Display clean-up (Decimal ඉවත් කිරීම)
     display_df = raw_df.copy()
     
     for col in display_df.columns:
-        if col != 'MODULE':
+        if col not in ['MODULE', 'Line No']:
             def clean_val(val):
                 if pd.isna(val) or str(val).strip() in ['', 'None', 'nan']:
                     return ''
@@ -104,15 +103,33 @@ try:
                         actual_val = float(val_str)
                         if target_val > 0:
                             if actual_val >= target_val:
-                                styles[i] = 'background-color: #c8e6c9; color: #1b5e20; font-weight: bold;' # කොළ පාට
+                                styles[i] = 'background-color: #c8e6c9; color: #1b5e20; font-weight: bold;'
                             else:
-                                styles[i] = 'background-color: #ffcdd2; color: #b71c1c; font-weight: bold;' # රතු පාට
+                                styles[i] = 'background-color: #ffcdd2; color: #b71c1c; font-weight: bold;'
                     except (ValueError, TypeError):
                         pass
         return styles
 
+    # Column Widths Dynamic Config
+    col_config = {
+        "Line No": st.column_config.Column("Line No", width="small"),
+        "MODULE": st.column_config.Column("MODULE", width="small"),
+        "Day Forecast": st.column_config.Column("Day Forecast", width="small"),
+        "Hourly Forecast": st.column_config.Column("Hourly Forecast", width="small"),
+        "TOTAL": st.column_config.Column("TOTAL", width="small")
+    }
+    
+    # 1 සිට 9 දක්වා පැය තීරුවල Size එකත් Small කිරීම
+    for i in range(1, 10):
+        col_config[str(i)] = st.column_config.Column(str(i), width="small")
+
     # Table Display
-    st.dataframe(display_df.style.apply(highlight_hourly, axis=1), use_container_width=True)
+    st.dataframe(
+        display_df.style.apply(highlight_hourly, axis=1), 
+        use_container_width=True, 
+        hide_index=True,
+        column_config=col_config
+    )
 
 except Exception as e:
     st.error(f"Data Load කිරීමේදී දෝෂයක් සිදු විය: {e}")
