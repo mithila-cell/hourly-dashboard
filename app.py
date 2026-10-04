@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import os
 
 # Page config
 st.set_page_config(
@@ -11,22 +12,22 @@ st.set_page_config(
 # Custom Styling
 st.markdown("""
 <style>
-    /* Adjust top container spacing to prevent Streamlit header overlap */
+    /* Top padding adjustment */
     .block-container {
-        padding-top: 3.5rem !important;
+        padding-top: 2rem !important;
         padding-bottom: 0.5rem !important;
         padding-left: 0.5rem !important;
         padding-right: 0.5rem !important;
     }
     
     .dashboard-title {
-        font-size: 22px;
+        font-size: 20px;
         font-weight: bold;
         color: #1E3A8A;
         text-align: center;
         margin-top: 10px;
-        margin-bottom: 15px;
-        line-height: 1.3;
+        margin-bottom: 10px;
+        line-height: 1.2;
     }
     
     .table-container {
@@ -84,7 +85,7 @@ st.markdown("""
 
     @media (max-width: 600px) {
         .dashboard-title {
-            font-size: 16px;
+            font-size: 14px;
         }
         .styled-table {
             font-size: 9px;
@@ -96,8 +97,19 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Main Title Display
-st.markdown('<div class="dashboard-title">GIZA Plant 2 - Hourly Production Monitoring Dashboard</div>', unsafe_allow_html=True)
+# Layout Header with Logos and Title
+col1, col2, col3 = st.columns([1, 4, 1])
+
+with col1:
+    if os.path.exists("GizaCo-Logo.jpg"):
+        st.image("GizaCo-Logo.jpg", width=110)
+
+with col2:
+    st.markdown('<div class="dashboard-title">GIZA Plant 2 - Hourly Production Monitoring Dashboard</div>', unsafe_allow_html=True)
+
+with col3:
+    if os.path.exists("HIJ LOGO.png"):
+        st.image("HIJ LOGO.png", width=90)
 
 SHEET_URL = "https://docs.google.com/spreadsheets/d/18YQkUYI-GQz24ImIIdm4vmB_JYBmNKIxDsgdWyJ0ehQ/export?format=csv"
 
