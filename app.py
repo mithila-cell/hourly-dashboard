@@ -5,19 +5,59 @@ import os
 # Page Configuration
 st.set_page_config(page_title="GIZA Hourly Production Dashboard", layout="wide")
 
+# Mobile Responsive Compact Table CSS Style
+st.markdown("""
+    <style>
+        .mobile-table-container {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        .mobile-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 10px;
+            text-align: center;
+        }
+        .mobile-table th, .mobile-table td {
+            padding: 4px 2px !important;
+            border: 1px solid #e0e0e0;
+            white-space: nowrap;
+        }
+        .mobile-table th {
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: bold;
+            font-size: 9px;
+            line-height: 1.1;
+        }
+        .pass-cell {
+            background-color: #c8e6c9 !important;
+            color: #1b5e20 !important;
+            font-weight: bold;
+        }
+        .fail-cell {
+            background-color: #ffcdd2 !important;
+            color: #b71c1c !important;
+            font-weight: bold;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 # Logo Display Logic
 logo_col1, logo_col2, title_col = st.columns([1, 1, 4])
 
 with logo_col1:
     for filename in ["GizaCo-Logo.jpg", "GizaCo-Logo.png", "GizaCo-Logo.jpeg", "giza.png", "giza.jpg"]:
         if os.path.exists(filename):
-            st.image(filename, width=120)
+            st.image(filename, width=100)
             break
 
 with logo_col2:
     for filename in ["HIJ LOGO.png", "HIJ LOGO.jpg", "HIJ LOGO.jpeg", "hij.png", "hij.jpg"]:
         if os.path.exists(filename):
-            st.image(filename, width=120)
+            st.image(filename, width=100)
             break
 
 with title_col:
@@ -71,63 +111,84 @@ try:
     st.divider()
     st.subheader("📋 Module Wise Hourly Production Table")
 
-    # Display clean-up (සෑම තීරුවකම Decimal සහ .0 ඉවත් කිරීම)
-    display_df = raw_df.copy()
-    
-    for col in display_df.columns:
-        def clean_val(val):
-            if pd.isna(val) or str(val).strip() in ['', 'None', 'nan']:
-                return ''
-            try:
-                return str(int(float(val)))
-            except (ValueError, TypeError):
-                return str(val)
-        display_df[col] = display_df[col].apply(clean_val)
+    # Mobile Compact HTML Table නිර්මාණය කිරීම
+    html_table = """
+    <div class="mobile-table-container">
+    <table class="mobile-table">
+        <thead>
+            <tr>
+                <th>Line<br>No</th>
+                <th>Day<br>Fcst</th>
+                <th>Hr<br>Fcst</th>
+                <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+                <th>6</th><th>7</th><th>8</th><th>9</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+    """
 
-    # Conditional Formatting Function
-    def highlight_hourly(row):
-        styles = [''] * len(row)
-        target = row.get('Hourly Forecast', '')
+    for idx, row in raw_df.iterrows():
+        html_table += "<tr>"
         
+        # Line No දශම අයින් කර ශුද්ධ අංකය ගැනීම
+        line_val = row.get('Line No', row.get('MODULE', ''))
         try:
-            target_val = float(target) if target != '' else 0
-        except (ValueError, TypeError):
+            line_str = str(int(float(line_val))) if pd.notna(line_val) and str(line_val).strip() != '' else ''
+        except:
+            line_str = str(line_val) if pd.notna(line_val) else ''
+            
+        html_table += f"<td><b>{line_str}</b></td>"
+        
+        # Day Forecast
+        df_val = row.get('Day Forecast', '')
+        try:
+            df_str = str(int(float(df_val))) if pd.notna(df_val) and str(df_val).strip() != '' else ''
+        except:
+            df_str = ''
+        html_table += f"<td>{df_str}</td>"
+        
+        # Hourly Forecast
+        hf_val = row.get('Hourly Forecast', '')
+        try:
+            target_val = float(hf_val) if pd.notna(hf_val) and str(hf_val).strip() != '' else 0
+            hf_str = str(int(target_val)) if target_val > 0 else ''
+        except:
             target_val = 0
+            hf_str = ''
+        html_table += f"<td>{hf_str}</td>"
 
-        for i, col in enumerate(row.index):
-            if str(col) in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                val_str = str(row[col]).strip()
-                if val_str != '':
-                    try:
-                        actual_val = float(val_str)
-                        if target_val > 0:
-                            if actual_val >= target_val:
-                                styles[i] = 'background-color: #c8e6c9; color: #1b5e20; font-weight: bold;'
-                            else:
-                                styles[i] = 'background-color: #ffcdd2; color: #b71c1c; font-weight: bold;'
-                    except (ValueError, TypeError):
-                        pass
-        return styles
+        # Hours 1 to 9
+        for h in range(1, 10):
+            val = row.get(str(h), '')
+            cell_class = ""
+            val_str = ""
+            if pd.notna(val) and str(val).strip() != '' and str(val).lower() != 'nan':
+                try:
+                    act_val = float(val)
+                    val_str = str(int(act_val))
+                    if target_val > 0:
+                        if act_val >= target_val:
+                            cell_class = "pass-cell"
+                        else:
+                            cell_class = "fail-cell"
+                except:
+                    val_str = str(val)
+            
+            html_table += f"<td class='{cell_class}'>{val_str}</td>"
 
-    # Column Formatting (මාතෘකා කෙටි කර Width එක "small" කිරීම)
-    col_config = {
-        "Line No": st.column_config.Column("Line No", width="small"),
-        "MODULE": st.column_config.Column("Module", width="small"),
-        "Day Forecast": st.column_config.Column("Day Fcst", width="small"),
-        "Hourly Forecast": st.column_config.Column("Hourly Fcst", width="small"),
-        "TOTAL": st.column_config.Column("Total", width="small")
-    }
-    
-    for i in range(1, 10):
-        col_config[str(i)] = st.column_config.Column(str(i), width="small")
+        # TOTAL
+        tot_val = row.get('TOTAL', '')
+        try:
+            tot_str = str(int(float(tot_val))) if pd.notna(tot_val) and str(tot_val).strip() != '' and str(tot_val).lower() != 'nan' else ''
+        except:
+            tot_str = ''
+        html_table += f"<td><b>{tot_str}</b></td>"
+        html_table += "</tr>"
 
-    # Table Display
-    st.dataframe(
-        display_df.style.apply(highlight_hourly, axis=1), 
-        use_container_width=True, 
-        hide_index=True,
-        column_config=col_config
-    )
+    html_table += "</tbody></table></div>"
+
+    st.markdown(html_table, unsafe_allow_html=True)
 
 except Exception as e:
     st.error(f"Data Load කිරීමේදී දෝෂයක් සිදු විය: {e}")
