@@ -5,13 +5,13 @@ import os
 # Page Configuration
 st.set_page_config(page_title="GIZA Hourly Production Dashboard", layout="wide")
 
-# Custom CSS for Fixed Width Desktop & Mobile Responsive Table
+# Custom CSS for Mobile Responsive Single-Cell Table
 st.markdown("""
     <style>
         .mobile-table-container {
             width: 100%;
-            max-width: 800px; /* Desktop එකේදී table එක ඇදීම පාලනය කරයි */
-            margin: 10px auto; /* Table එක මැදට center කරයි */
+            max-width: 900px;
+            margin: 10px auto;
             overflow-x: auto;
         }
         .mobile-table {
@@ -24,53 +24,26 @@ st.markdown("""
         .mobile-table th {
             background-color: #333;
             color: #fff;
-            padding: 6px 2px !important;
+            padding: 6px 3px !important;
             border: 1px solid #444;
             white-space: nowrap;
             font-size: 10px;
             line-height: 1.1;
         }
         .mobile-table td {
-            padding: 0px !important;
+            padding: 6px 3px !important;
             border: 1px solid #ccc;
+            font-weight: bold;
+            font-size: 11px;
             vertical-align: middle;
         }
-        
-        /* Split Cell Layout Style */
-        .split-cell {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            width: 100%;
-            min-width: 32px;
+        .pass-cell {
+            background-color: #00a65a !important; /* Bold Green */
+            color: #ffffff !important;
         }
-        .target-box {
-            background-color: #00a65a; /* Green Target Top */
-            color: #ffffff;
-            font-weight: bold;
-            font-size: 10px;
-            padding: 2px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.3);
-        }
-        .actual-box-pass {
-            background-color: #00a65a; /* Green Actual Bottom */
-            color: #ffffff;
-            font-weight: bold;
-            font-size: 11px;
-            padding: 2px 0;
-        }
-        .actual-box-fail {
-            background-color: #ff0000; /* Red Actual Bottom */
-            color: #ffffff;
-            font-weight: bold;
-            font-size: 11px;
-            padding: 2px 0;
-        }
-        
-        .plain-td {
-            padding: 4px 2px !important;
-            font-weight: bold;
-            font-size: 11px;
+        .fail-cell {
+            background-color: #ff0000 !important; /* Bold Red */
+            color: #ffffff !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -106,7 +79,7 @@ def load_data():
 try:
     raw_df = load_data()
 
-    # Active hours සොයා ගැනීම
+    # Active hours calculation
     active_hours = []
     for h in range(1, 10):
         col = str(h)
@@ -141,7 +114,7 @@ try:
     st.divider()
     st.subheader("📋 Module Wise Hourly Production Table")
 
-    # Split-Cell HTML Table Generation
+    # Clean Mobile HTML Table Generation
     html_table = """
     <div class="mobile-table-container">
     <table class="mobile-table">
@@ -168,7 +141,7 @@ try:
         except:
             line_str = str(line_val) if pd.notna(line_val) else ''
             
-        html_table += f"<td class='plain-td'>{line_str}</td>"
+        html_table += f"<td>{line_str}</td>"
         
         # Day Forecast
         df_val = row.get('Day Forecast', '')
@@ -176,7 +149,7 @@ try:
             df_str = str(int(float(df_val))) if pd.notna(df_val) and str(df_val).strip() != '' else ''
         except:
             df_str = ''
-        html_table += f"<td class='plain-td'>{df_str}</td>"
+        html_table += f"<td>{df_str}</td>"
         
         # Hourly Forecast (Target)
         hf_val = row.get('Hourly Forecast', '')
@@ -186,32 +159,28 @@ try:
         except:
             target_val = 0
             hf_str = ''
-        html_table += f"<td class='plain-td'>{hf_str}</td>"
+        html_table += f"<td>{hf_str}</td>"
 
-        # Hours 1 to 9 (Split Cell Logic)
+        # Hours 1 to 9 (Single Cell with Target Comparison Color)
         for h in range(1, 10):
             val = row.get(str(h), '')
+            cell_class = ""
+            val_str = ""
+            
             if pd.notna(val) and str(val).strip() != '' and str(val).lower() != 'nan':
                 try:
                     act_val = float(val)
-                    act_str = str(int(act_val))
+                    val_str = str(int(act_val))
                     
-                    # Actual >= Target -> Green else Red
-                    actual_class = "actual-box-pass" if (target_val > 0 and act_val >= target_val) else "actual-box-fail"
-                    target_str = str(int(target_val)) if target_val > 0 else "-"
-                    
-                    cell_html = f"""
-                    <div class="split-cell">
-                        <div class="target-box">{target_str}</div>
-                        <div class="{actual_class}">{act_str}</div>
-                    </div>
-                    """
+                    if target_val > 0:
+                        if act_val >= target_val:
+                            cell_class = "pass-cell"
+                        else:
+                            cell_class = "fail-cell"
                 except:
-                    cell_html = str(val)
-            else:
-                cell_html = ""
+                    val_str = str(val)
             
-            html_table += f"<td>{cell_html}</td>"
+            html_table += f"<td class='{cell_class}'>{val_str}</td>"
 
         # TOTAL
         tot_val = row.get('TOTAL', '')
@@ -219,7 +188,7 @@ try:
             tot_str = str(int(float(tot_val))) if pd.notna(tot_val) and str(tot_val).strip() != '' and str(tot_val).lower() != 'nan' else ''
         except:
             tot_str = ''
-        html_table += f"<td class='plain-td'>{tot_str}</td>"
+        html_table += f"<td>{tot_str}</td>"
         html_table += "</tr>"
 
     html_table += "</tbody></table></div>"
@@ -227,4 +196,4 @@ try:
     st.markdown(html_table, unsafe_allow_html=True)
 
 except Exception as e:
-    st.error(f"Data Load කිරීමේදී දෝෂයක් සිදු විය: {e}")
+    st.error(f"Data load maduvaga error bandide: {e}")
