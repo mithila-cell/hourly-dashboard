@@ -8,17 +8,24 @@ st.set_page_config(
     layout="wide"
 )
 
-# Streamlit Native Title Display (Clearly Visible)
-st.title("GIZA Plant 2 - Hourly Production Monitoring Dashboard")
-
-# Custom CSS for table styling only
+# Custom Styling
 st.markdown("""
 <style>
+    /* Add enough space at the top so title won't get cut off */
     .block-container {
-        padding-top: 1rem !important;
+        padding-top: 2rem !important;
         padding-bottom: 0.5rem !important;
-        padding-left: 0.2rem !important;
-        padding-right: 0.2rem !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+    
+    .dashboard-title {
+        font-size: 22px;
+        font-weight: bold;
+        color: #1E3A8A;
+        text-align: center;
+        margin-bottom: 15px;
+        line-height: 1.3;
     }
     
     .table-container {
@@ -35,14 +42,14 @@ st.markdown("""
     .styled-table th {
         background-color: #1E293B;
         color: white;
-        padding: 5px 3px;
+        padding: 6px 4px;
         text-align: center;
         border: 1px solid #334155;
         font-weight: bold;
         white-space: nowrap;
     }
     .styled-table td {
-        padding: 4px 2px;
+        padding: 5px 3px;
         text-align: center;
         border: 1px solid #CBD5E1;
         font-weight: bold;
@@ -75,15 +82,21 @@ st.markdown("""
     }
 
     @media (max-width: 600px) {
+        .dashboard-title {
+            font-size: 16px;
+        }
         .styled-table {
             font-size: 9px;
         }
         .styled-table th, .styled-table td {
-            padding: 2px 1px;
+            padding: 3px 1px;
         }
     }
 </style>
 """, unsafe_allow_html=True)
+
+# Main Title Display
+st.markdown('<div class="dashboard-title">GIZA Plant 2 - Hourly Production Monitoring Dashboard</div>', unsafe_allow_html=True)
 
 SHEET_URL = "https://docs.google.com/spreadsheets/d/18YQkUYI-GQz24ImIIdm4vmB_JYBmNKIxDsgdWyJ0ehQ/export?format=csv"
 
