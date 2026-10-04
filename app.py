@@ -7,7 +7,7 @@ st.set_page_config(page_title="Hourly Production Dashboard", layout="wide")
 st.title("🏭 Hourly Production Live Dashboard")
 st.caption("Google Sheets හා සම්බන්ධිත සජීවී Production Tracker එක")
 
-# ඔබේ Google Sheet CSV Link එක
+# Google Sheet CSV Link
 SHEET_URL = "https://docs.google.com/spreadsheets/d/18YQkUYI-GQz24ImIIdm4vmB_JYBmNKIxDsgdWyJ0ehQ/export?format=csv"
 
 @st.cache_data(ttl=60)
@@ -18,9 +18,12 @@ def load_data():
 try:
     df = load_data()
 
-    # KPI Calculation
-    total_target = pd.to_numeric(df.get('TOTAL_TARGET', 0), errors='coerce').sum()
-    total_actual = pd.to_numeric(df.get('TOTAL_ACTUAL', 0), errors='coerce').sum()
+    # KPI Calculation (Column එක නැතිනම් Error නොවන ලෙස ආරක්ෂිතව ගණනය කිරීම)
+    target_series = df['TOTAL_TARGET'] if 'TOTAL_TARGET' in df.columns else pd.Series([0])
+    actual_series = df['TOTAL_ACTUAL'] if 'TOTAL_ACTUAL' in df.columns else pd.Series([0])
+
+    total_target = pd.to_numeric(target_series, errors='coerce').sum()
+    total_actual = pd.to_numeric(actual_series, errors='coerce').sum()
     overall_eff = (total_actual / total_target * 100) if total_target > 0 else 0.0
 
     col1, col2, col3 = st.columns(3)
@@ -31,7 +34,7 @@ try:
     st.divider()
     st.subheader("📋 Module Wise Hourly Production Table")
 
-    # Conditional Formatting Function (Target එකට වඩා වැඩි නම් කොළ / අඩු නම් රතු)
+    # Target එකට වඩා වැඩි නම් කොළ / අඩු නම් රතු පාටින් පෙන්වන ශ්‍රිතය
     def highlight_hourly(row):
         styles = [''] * len(row)
         target = row.get('HOURLY PCS', 0)
