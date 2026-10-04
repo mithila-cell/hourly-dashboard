@@ -178,11 +178,7 @@ if not df_raw.empty:
                 except (ValueError, TypeError):
                     cell_text = str(actual_val)
 
-            # Color Logic:
-            # 1. අගයක් නැතිනම් (-) -> Neutral
-            # 2. Hourly Forecast එක 0 නම් -> Yellow (කහ)
-            # 3. Actual >= Forecast නම් -> Green (කොළ)
-            # 4. Actual < Forecast නම් -> Red (රතු)
+            # Color Logic
             if cell_text == "-":
                 cell_class = "neutral-cell"
             elif hr_fc == 0:
@@ -201,7 +197,7 @@ if not df_raw.empty:
 
         html += '</tr>'
 
-    html += 'tbody></table></div>'
+    html += '</tbody></table></div>'
     
     st.markdown(html, unsafe_allow_html=True)
     
