@@ -4,16 +4,20 @@ import pandas as pd
 # Page Configuration
 st.set_page_config(page_title="GIZA Hourly Production Dashboard", layout="wide")
 
-# Logo 2 සහ Title එක Header එකක් ලෙස එක ළඟ දැක්වීම
+# Local uploaded logo display logic
 logo_col1, logo_col2, title_col = st.columns([1, 1, 4])
 
 with logo_col1:
-    # GIZA Logo
-    st.image("https://i.ibb.co/68fD84q/Giza-Co-Logo.jpg", width=120)
+    try:
+        st.image("GizaCo-Logo.jpg", width=120)
+    except:
+        st.image("GizaCo-Logo.png", width=120)
 
 with logo_col2:
-    # HIJ Logo
-    st.image("https://i.ibb.co/3sSChsn/HIJ-LOGO.png", width=120)
+    try:
+        st.image("HIJ LOGO.png", width=120)
+    except:
+        st.image("HIJ LOGO.jpg", width=120)
 
 with title_col:
     st.title("GIZA Hourly Production Dashboard")
@@ -54,7 +58,7 @@ try:
     st.divider()
     st.subheader("📋 Module Wise Hourly Production Table")
 
-    # Display එක සඳහා දශම ස්ථාන ඉවත් කිරීම
+    # Display clean-up (Remove decimals)
     display_df = raw_df.copy()
     
     for col in display_df.columns:
