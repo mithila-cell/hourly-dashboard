@@ -19,16 +19,6 @@ st.markdown("""
         padding-right: 0.2rem !important;
     }
     
-    .main-title {
-        font-size: 20px;
-        font-weight: bold;
-        color: #1E3A8A;
-        text-align: center;
-        margin-top: 5px;
-        margin-bottom: 15px;
-        line-height: 1.2;
-    }
-    
     /* Responsive Mobile Table Styling */
     .table-container {
         width: 100%;
@@ -67,10 +57,6 @@ st.markdown("""
         background-color: #EF4444 !important;
         color: white !important;
     }
-    .yellow-cell {
-        background-color: #EAB308 !important;
-        color: white !important;
-    }
     .neutral-cell {
         background-color: #F8FAFC;
         color: #0F172A;
@@ -85,9 +71,6 @@ st.markdown("""
 
     /* Target small mobile screens */
     @media (max-width: 600px) {
-        .main-title {
-            font-size: 16px;
-        }
         .styled-table {
             font-size: 10px;
         }
@@ -97,9 +80,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
-# Main Title Only
-st.markdown('<div class="main-title">GIZA Plant 2 - Hourly Production Monitoring Dashboard</div>', unsafe_allow_html=True)
 
 SHEET_URL = "https://docs.google.com/spreadsheets/d/18YQkUYI-GQz24ImIIdm4vmB_JYBmNKIxDsgdWyJ0ehQ/export?format=csv"
 
@@ -184,9 +164,8 @@ if not df_raw.empty:
                 except (ValueError, TypeError):
                     cell_text = str(actual_val)
 
-            if hr_fc == 0:
-                cell_class = "yellow-cell"
-            elif cell_text == "-":
+            # Color logic (Pass if Actual >= Forecast, else Fail)
+            if cell_text == "-":
                 cell_class = "neutral-cell"
             else:
                 try:
