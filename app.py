@@ -3,7 +3,7 @@ import pandas as pd
 import os
 
 # Page Configuration
-st.set_page_config(page_title="GIZA Hourly Production Dashboard", layout="wide")
+st.set_page_config(page_title="GIZA Hourly Production Dashboard - Plant 2", layout="wide")
 
 # Custom CSS for Mobile Responsive Single-Cell Table
 st.markdown("""
