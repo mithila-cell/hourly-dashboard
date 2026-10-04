@@ -8,24 +8,17 @@ st.set_page_config(
     layout="wide"
 )
 
-# Responsive Mobile Compact CSS
+# Streamlit Native Title Display (Clearly Visible)
+st.title("GIZA Plant 2 - Hourly Production Monitoring Dashboard")
+
+# Custom CSS for table styling only
 st.markdown("""
 <style>
     .block-container {
-        padding-top: 0.5rem !important;
+        padding-top: 1rem !important;
         padding-bottom: 0.5rem !important;
         padding-left: 0.2rem !important;
         padding-right: 0.2rem !important;
-    }
-    
-    .main-title {
-        font-size: 20px;
-        font-weight: bold;
-        color: #1E3A8A;
-        text-align: center;
-        margin-top: 5px;
-        margin-bottom: 12px;
-        line-height: 1.2;
     }
     
     .table-container {
@@ -82,9 +75,6 @@ st.markdown("""
     }
 
     @media (max-width: 600px) {
-        .main-title {
-            font-size: 15px;
-        }
         .styled-table {
             font-size: 9px;
         }
@@ -94,9 +84,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
-# Main Title Display
-st.markdown('<div class="main-title">GIZA Plant 2 - Hourly Production Monitoring Dashboard</div>', unsafe_allow_html=True)
 
 SHEET_URL = "https://docs.google.com/spreadsheets/d/18YQkUYI-GQz24ImIIdm4vmB_JYBmNKIxDsgdWyJ0ehQ/export?format=csv"
 
