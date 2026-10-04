@@ -25,9 +25,16 @@ st.markdown("""
         font-weight: bold;
         color: #1E3A8A;
         text-align: center;
-        margin-top: 10px;
+        margin-top: 5px;
         margin-bottom: 10px;
         line-height: 1.2;
+    }
+    
+    /* Center align logos inside columns */
+    [data-testid="stColumn"] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     .table-container {
@@ -97,19 +104,19 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Layout Header with Logos and Title
-col1, col2, col3 = st.columns([1, 4, 1])
+# Layout Header with Logos and Title (Balanced Columns)
+col1, col2, col3 = st.columns([1.5, 5, 1.5])
 
 with col1:
     if os.path.exists("GizaCo-Logo.jpg"):
-        st.image("GizaCo-Logo.jpg", width=110)
+        st.image("GizaCo-Logo.jpg", width=100)
 
 with col2:
     st.markdown('<div class="dashboard-title">GIZA Plant 2 - Hourly Production Monitoring Dashboard</div>', unsafe_allow_html=True)
 
 with col3:
     if os.path.exists("HIJ LOGO.png"):
-        st.image("HIJ LOGO.png", width=90)
+        st.image("HIJ LOGO.png", width=80)
 
 SHEET_URL = "https://docs.google.com/spreadsheets/d/18YQkUYI-GQz24ImIIdm4vmB_JYBmNKIxDsgdWyJ0ehQ/export?format=csv"
 
@@ -210,7 +217,7 @@ if not df_raw.empty:
 
         html += '</tr>'
 
-    html += '</tbody></table></div>'
+    html += 'tbody></table></div>'
     
     st.markdown(html, unsafe_allow_html=True)
     
