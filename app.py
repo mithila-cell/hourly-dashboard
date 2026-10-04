@@ -1,23 +1,28 @@
 import streamlit as st
 import pandas as pd
+import os
 
 # Page Configuration
-st.set_page_config(page_title="GIZA Hourly Production Dashboard", layout="wide")
+st.set_page_config(page_title="GIZA Hourly Production Dashboard - Plant 2", layout="wide")
 
-# Local uploaded logo display logic
+# Logo Display Logic (File එක තිබේ නම් පමණක් පෙන්වයි, නැතත් Error නොදෙයි)
 logo_col1, logo_col2, title_col = st.columns([1, 1, 4])
 
 with logo_col1:
-    try:
-        st.image("GizaCo-Logo.jpg", width=120)
-    except:
-        st.image("GizaCo-Logo.png", width=120)
+    giza_logo_found = False
+    for filename in ["GizaCo-Logo.jpg", "GizaCo-Logo.png", "GizaCo-Logo.jpeg", "giza.png", "giza.jpg"]:
+        if os.path.exists(filename):
+            st.image(filename, width=120)
+            giza_logo_found = True
+            break
 
 with logo_col2:
-    try:
-        st.image("HIJ LOGO.png", width=120)
-    except:
-        st.image("HIJ LOGO.jpg", width=120)
+    hij_logo_found = False
+    for filename in ["HIJ LOGO.png", "HIJ LOGO.jpg", "HIJ LOGO.jpeg", "hij.png", "hij.jpg"]:
+        if os.path.exists(filename):
+            st.image(filename, width=120)
+            hij_logo_found = True
+            break
 
 with title_col:
     st.title("GIZA Hourly Production Dashboard")
