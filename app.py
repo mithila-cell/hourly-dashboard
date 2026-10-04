@@ -1,14 +1,14 @@
 import streamlit as st
 import pandas as pd
 
-# Page config
+# Page config - Title එක කලින් තිබුණු නමට වෙනස් කර ඇත
 st.set_page_config(
-    page_title="Mithila Cell - Production Dashboard",
+    page_title="GIZA - Hourly Production Monitoring Dashboard",
     page_icon="📊",
     layout="wide"
 )
 
-# Custom CSS for styling and HTML Table single-cell presentation
+# Custom CSS styling
 st.markdown("""
 <style>
     .main-title {
@@ -92,11 +92,19 @@ if not df_raw.empty:
     
     df = df_raw.copy()
     
-    # Convert 'Line No' column safely
+    # Fill missing PM names vertically down
+    if 'PM' in df.columns:
+        df['PM'] = df['PM'].ffill()
+
+    # Clean 'Line No' column safely
     df['Line No Clean'] = df['Line No'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
     
-    # Exclude non-numeric summary rows
+    # Exclude non-numeric summary rows (like PLANT 2)
     df = df[df['Line No Clean'].str.contains(r'^\d+$', na=False)]
+
+    # Sort numerically by Line No
+    df['Line No Int'] = df['Line No Clean'].astype(int)
+    df = df.sort_values(by='Line No Int')
 
     # Hours 1 to 8 list
     hours = [str(h) for h in range(1, 9)]
