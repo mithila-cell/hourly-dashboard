@@ -7,8 +7,8 @@ st.set_page_config(page_title="Hourly Production Dashboard", layout="wide")
 st.title("🏭 Hourly Production Live Dashboard")
 st.caption("Google Sheets හා සම්බන්ධිත සජීවී Production Tracker එක")
 
-# ඔබේ Google Sheet CSV Link එක (YOUR_SHEET_ID එක වෙනස් කරන්න)
-SHEET_URL = "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/export?format=csv"
+# ඔබේ Google Sheet CSV Link එක
+SHEET_URL = "https://docs.google.com/spreadsheets/d/18YQkUYI-GQz24ImIIdm4vmB_JYBmNKIxDsgdWyJ0ehQ/export?format=csv"
 
 @st.cache_data(ttl=60)
 def load_data():
