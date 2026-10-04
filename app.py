@@ -104,7 +104,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Layout Header with Logos and Title (Balanced Columns)
+# Layout Header with Logos and Title
 col1, col2, col3 = st.columns([1.5, 5, 1.5])
 
 with col1:
@@ -217,7 +217,7 @@ if not df_raw.empty:
 
         html += '</tr>'
 
-    html += 'tbody></table></div>'
+    html += '</tbody></table></div>'
     
     st.markdown(html, unsafe_allow_html=True)
     
