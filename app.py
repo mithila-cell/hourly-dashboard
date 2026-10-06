@@ -172,7 +172,7 @@ if not df_raw.empty:
     
     for h in hours:
         html += f'<th>H{h}</th>'
-    html += '<th>TOTAL</th>'  # 8 වෙනි පැයට පස්සේ Total Column එක එකතු කළා
+    html += '<th>TOTAL</th>'
     html += '</tr></thead><tbody>'
 
     pm_counts = df['PM'].value_counts(sort=False)
@@ -212,10 +212,10 @@ if not df_raw.empty:
         # Line Number Cell Style
         line_class = "neutral-cell"
         if hr_fc == 0:
-            line_class = "yellow-cell"  # Forecast 0 නම් Line No එක කහ පාටයි
+            line_class = "yellow-cell"
         elif entered_hours_count > 0 and target_so_far > 0:
             if total_actual_so_far < (0.40 * target_so_far):
-                line_class = "blinking-line"  # 40% ට අඩු නම් Blinking Red
+                line_class = "blinking-line"
 
         html += f'<tr>'
         
@@ -244,7 +244,7 @@ if not df_raw.empty:
             if cell_text == "-":
                 cell_class = "neutral-cell"
             elif hr_fc == 0:
-                cell_class = "yellow-cell"  # Forecast 0 නම් කහ පාටයි
+                cell_class = "yellow-cell"
             else:
                 try:
                     act_num = float(actual_val)
@@ -257,7 +257,7 @@ if not df_raw.empty:
 
             html += f'<td class="{cell_class}">{cell_text}</td>'
 
-        # Total Column එක පෙන්නන ස්ථානය
+        # Total Column
         total_text = f"{int(total_actual_so_far)}" if total_actual_so_far.is_integer() else f"{total_actual_so_far}"
         if entered_hours_count == 0:
             total_text = "-"
@@ -268,4 +268,10 @@ if not df_raw.empty:
 
     html += '</tbody></table></div>'
     
-    st.markdown(html
+    st.markdown(html, unsafe_allow_html=True)
+    
+    if st.button("🔄 Refresh Data"):
+        st.cache_data.clear()
+        st.rerun()
+else:
+    st.warning("No data found in Google Sheet.")
