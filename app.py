@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom Styling (Desktop & Mobile Optimized)
+# Mobile-Safe Mobile Compatible Styling
 st.markdown("""
 <style>
     /* Top padding adjustment */
@@ -66,31 +66,36 @@ st.markdown("""
         white-space: nowrap;
     }
 
-    /* Keyframes for Blinking Red Alert (< 40% Target) */
-    @keyframes blink-animation {
-        0% { background-color: #EF4444 !important; color: #FFFFFF !important; }
-        50% { background-color: #7F1D1D !important; color: #FFFFFF !important; }
-        100% { background-color: #EF4444 !important; color: #FFFFFF !important; }
+    /* Mobile Compatible Keyframes using Opacity Pulse */
+    @-webkit-keyframes mobile-blink {
+        0% { background-color: #EF4444; color: #FFFFFF; }
+        50% { background-color: #991B1B; color: #FFFFFF; }
+        100% { background-color: #EF4444; color: #FFFFFF; }
+    }
+    @keyframes mobile-blink {
+        0% { background-color: #EF4444; color: #FFFFFF; }
+        50% { background-color: #991B1B; color: #FFFFFF; }
+        100% { background-color: #EF4444; color: #FFFFFF; }
     }
 
     /* Strict Base Colors */
-    td.pass-cell {
+    .pass-cell {
         background-color: #22C55E !important;
         color: #FFFFFF !important;
     }
-    td.fail-cell {
+    .fail-cell {
         background-color: #EF4444 !important;
         color: #FFFFFF !important;
     }
-    td.yellow-cell {
+    .yellow-cell {
         background-color: #EAB308 !important;
         color: #000000 !important;
     }
-    td.neutral-cell {
+    .neutral-cell {
         background-color: #F8FAFC !important;
         color: #0F172A !important;
     }
-    td.pm-cell {
+    .pm-cell {
         background-color: #E2E8F0 !important;
         color: #0F172A !important;
         vertical-align: middle;
@@ -98,9 +103,10 @@ st.markdown("""
         font-size: 10px;
     }
 
-    /* Blinking Red Class for Line Column (<40% target) */
-    td.blinking-line {
-        animation: blink-animation 1s infinite !important;
+    /* Mobile Engine Safe Blinking Class */
+    .blinking-line {
+        -webkit-animation: mobile-blink 1s infinite ease-in-out !important;
+        animation: mobile-blink 1s infinite ease-in-out !important;
         font-weight: bold !important;
     }
 
@@ -207,7 +213,7 @@ if not df_raw.empty:
 
         target_so_far = hr_fc * entered_hours_count
         
-        # Line Number Cell Class (40% ට වඩා අඩු නම් නිවි නිවී පත්තු වෙනවා)
+        # Line Number Cell Class Logic
         line_class = "neutral-cell"
         if hr_fc > 0 and entered_hours_count > 0 and target_so_far > 0:
             if total_actual_so_far < (0.40 * target_so_far):
