@@ -40,6 +40,7 @@ st.markdown("""
     .table-container {
         width: 100%;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
     .styled-table {
         width: 100%;
@@ -49,8 +50,8 @@ st.markdown("""
         table-layout: auto;
     }
     .styled-table th {
-        background-color: #1E293B;
-        color: white;
+        background-color: #1E293B !important;
+        color: white !important;
         padding: 6px 4px;
         text-align: center;
         border: 1px solid #334155;
@@ -65,26 +66,9 @@ st.markdown("""
         white-space: nowrap;
     }
     
-    /* Cell Status Colors */
-    .pass-cell {
-        background-color: #22C55E !important;
-        color: white !important;
-    }
-    .fail-cell {
-        background-color: #EF4444 !important;
-        color: white !important;
-    }
-    .yellow-cell {
-        background-color: #EAB308 !important;
-        color: #000000 !important;
-    }
-    .neutral-cell {
-        background-color: #F8FAFC !important;
-        color: #0F172A !important;
-    }
     .pm-cell {
-        background-color: #E2E8F0;
-        color: #0F172A;
+        background-color: #E2E8F0 !important;
+        color: #0F172A !important;
         vertical-align: middle;
         font-weight: bold;
         font-size: 10px;
@@ -92,9 +76,9 @@ st.markdown("""
 
     /* Blinking Animation for Low Performing Lines (< 40% Target) */
     @keyframes blink-animation {
-        0% { background-color: #EF4444; color: white; }
-        50% { background-color: #7F1D1D; color: white; }
-        100% { background-color: #EF4444; color: white; }
+        0% { background-color: #EF4444 !important; color: white !important; }
+        50% { background-color: #7F1D1D !important; color: white !important; }
+        100% { background-color: #EF4444 !important; color: white !important; }
     }
     .blinking-line {
         animation: blink-animation 1s infinite !important;
@@ -173,6 +157,12 @@ if not df_raw.empty:
     pm_counts = df['PM'].value_counts(sort=False)
     seen_pms = set()
 
+    # Mobile/Browser Override වැලැක්වීමට Direct Inline Styles
+    STYLE_YELLOW = 'style="background-color: #EAB308 !important; color: #000000 !important;"'
+    STYLE_PASS = 'style="background-color: #22C55E !important; color: #FFFFFF !important;"'
+    STYLE_FAIL = 'style="background-color: #EF4444 !important; color: #FFFFFF !important;"'
+    STYLE_NEUTRAL = 'style="background-color: #F8FAFC !important; color: #0F172A !important;"'
+
     for _, row in df.iterrows():
         pm_val = str(row.get('PM', ''))
         line_val = row.get('Line No Clean', '')
@@ -187,7 +177,6 @@ if not df_raw.empty:
         except (ValueError, TypeError):
             hr_fc = 0.0
 
-        # Calculate Total Output & Count Entered Hours up to now
         entered_hours_count = 0
         total_actual_so_far = 0.0
 
@@ -201,14 +190,13 @@ if not df_raw.empty:
                 except (ValueError, TypeError):
                     pass
 
-        # Target so far = Hourly Forecast * Entered Hours
         target_so_far = hr_fc * entered_hours_count
         
-        # Line Number Cell Style (Normal if forecast is 0, Blinking Red only if below 40% of target)
-        line_class = "neutral-cell"
+        # Line No Style (Forecast 0 නම් Normal, 40% ට අඩු නම් පමණක් Blinking Red)
+        line_class_attr = f'class="neutral-cell" {STYLE_NEUTRAL}'
         if hr_fc > 0 and entered_hours_count > 0 and target_so_far > 0:
             if total_actual_so_far < (0.40 * target_so_far):
-                line_class = "blinking-line"
+                line_class_attr = 'class="blinking-line"'
 
         html += f'<tr>'
         
@@ -217,16 +205,16 @@ if not df_raw.empty:
             html += f'<td class="pm-cell" rowspan="{rowspan}">{pm_val}</td>'
             seen_pms.add(pm_val)
 
-        html += f'<td class="{line_class}">{line_val}</td>'
-        html += f'<td class="neutral-cell">{day_fc}</td>'
-        html += f'<td class="neutral-cell">{hr_fc_val if not pd.isna(hr_fc_val) else "-"}</td>'
+        html += f'<td {line_class_attr}>{line_val}</td>'
+        html += f'<td {STYLE_NEUTRAL}>{day_fc}</td>'
+        html += f'<td {STYLE_NEUTRAL}>{hr_fc_val if not pd.isna(hr_fc_val) else "-"}</td>'
 
         for h in hours:
             actual_val = row.get(h, None)
             
-            # If Forecast is 0, make ALL hourly cells YELLOW for the whole day
+            # Forecast = 0 නම් එකවර පැය 8ම කහ පාට කිරීම
             if hr_fc == 0:
-                cell_class = "yellow-cell"
+                cell_style = STYLE_YELLOW
                 if pd.isna(actual_val) or str(actual_val).strip() == "" or str(actual_val) == "nan":
                     cell_text = "-"
                 else:
@@ -238,27 +226,27 @@ if not df_raw.empty:
             else:
                 if pd.isna(actual_val) or str(actual_val).strip() == "" or str(actual_val) == "nan":
                     cell_text = "-"
-                    cell_class = "neutral-cell"
+                    cell_style = STYLE_NEUTRAL
                 else:
                     try:
                         act_num = float(actual_val)
                         cell_text = f"{int(act_num)}" if act_num.is_integer() else f"{act_num}"
                         if act_num >= hr_fc:
-                            cell_class = "pass-cell"
+                            cell_style = STYLE_PASS
                         else:
-                            cell_class = "fail-cell"
+                            cell_style = STYLE_FAIL
                     except (ValueError, TypeError):
                         cell_text = str(actual_val)
-                        cell_class = "neutral-cell"
+                        cell_style = STYLE_NEUTRAL
 
-            html += f'<td class="{cell_class}">{cell_text}</td>'
+            html += f'<td {cell_style}>{cell_text}</td>'
 
-        # Total Column (Formatted as normal cell style)
+        # Total Cell එක (සාමාන්‍ය Cell ප්‍රමාණයෙන්)
         total_text = f"{int(total_actual_so_far)}" if total_actual_so_far.is_integer() else f"{total_actual_so_far}"
         if entered_hours_count == 0:
             total_text = "-"
             
-        html += f'<td class="neutral-cell">{total_text}</td>'
+        html += f'<td {STYLE_NEUTRAL}>{total_text}</td>'
 
         html += '</tr>'
 
