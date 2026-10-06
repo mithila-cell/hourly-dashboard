@@ -90,6 +90,17 @@ st.markdown("""
         font-size: 10px;
     }
 
+    /* Blinking Animation for Low Performing Lines (< 40% Target) */
+    @keyframes blink-animation {
+        0% { background-color: #EF4444; color: white; }
+        50% { background-color: #7F1D1D; color: white; }
+        100% { background-color: #EF4444; color: white; }
+    }
+    .blinking-line {
+        animation: blink-animation 1s infinite !important;
+        font-weight: bold !important;
+    }
+
     @media (max-width: 600px) {
         .dashboard-title {
             font-size: 14px;
@@ -175,6 +186,29 @@ if not df_raw.empty:
         except (ValueError, TypeError):
             hr_fc = 0.0
 
+        # Calculate Total Output & Count Entered Hours up to now
+        entered_hours_count = 0
+        total_actual_so_far = 0.0
+
+        for h in hours:
+            val = row.get(h, None)
+            if not (pd.isna(val) or str(val).strip() == "" or str(val) == "nan"):
+                try:
+                    act_val = float(val)
+                    total_actual_so_far += act_val
+                    entered_hours_count += 1
+                except (ValueError, TypeError):
+                    pass
+
+        # Target so far = Hourly Forecast * Entered Hours
+        target_so_far = hr_fc * entered_hours_count
+        
+        # Line Number Cell Style (Blinking Red if below 40% of target so far)
+        line_class = "neutral-cell"
+        if entered_hours_count > 0 and target_so_far > 0:
+            if total_actual_so_far < (0.40 * target_so_far):
+                line_class = "blinking-line"
+
         html += f'<tr>'
         
         if pm_val not in seen_pms:
@@ -182,7 +216,7 @@ if not df_raw.empty:
             html += f'<td class="pm-cell" rowspan="{rowspan}">{pm_val}</td>'
             seen_pms.add(pm_val)
 
-        html += f'<td class="neutral-cell">{line_val}</td>'
+        html += f'<td class="{line_class}">{line_val}</td>'
         html += f'<td class="neutral-cell">{day_fc}</td>'
         html += f'<td class="neutral-cell">{hr_fc_val if not pd.isna(hr_fc_val) else "-"}</td>'
 
@@ -198,7 +232,7 @@ if not df_raw.empty:
                 except (ValueError, TypeError):
                     cell_text = str(actual_val)
 
-            # Color Logic
+            # Cell Color Logic
             if cell_text == "-":
                 cell_class = "neutral-cell"
             elif hr_fc == 0:
