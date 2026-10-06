@@ -76,16 +76,11 @@ st.markdown("""
     }
     .yellow-cell {
         background-color: #EAB308 !important;
-        color: black !important;
+        color: #000000 !important;
     }
     .neutral-cell {
         background-color: #F8FAFC !important;
         color: #0F172A !important;
-    }
-    .total-cell {
-        background-color: #0F172A !important;
-        color: #FFFFFF !important;
-        font-size: 12px !important;
     }
     .pm-cell {
         background-color: #E2E8F0;
@@ -209,11 +204,9 @@ if not df_raw.empty:
         # Target so far = Hourly Forecast * Entered Hours
         target_so_far = hr_fc * entered_hours_count
         
-        # Line Number Cell Style
+        # Line Number Cell Style (Normal if forecast is 0, Blinking Red only if below 40% of target)
         line_class = "neutral-cell"
-        if hr_fc == 0:
-            line_class = "yellow-cell"
-        elif entered_hours_count > 0 and target_so_far > 0:
+        if hr_fc > 0 and entered_hours_count > 0 and target_so_far > 0:
             if total_actual_so_far < (0.40 * target_so_far):
                 line_class = "blinking-line"
 
@@ -231,38 +224,41 @@ if not df_raw.empty:
         for h in hours:
             actual_val = row.get(h, None)
             
-            if pd.isna(actual_val) or str(actual_val).strip() == "" or str(actual_val) == "nan":
-                cell_text = "-"
-            else:
-                try:
-                    act_num = float(actual_val)
-                    cell_text = f"{int(act_num)}" if act_num.is_integer() else f"{act_num}"
-                except (ValueError, TypeError):
-                    cell_text = str(actual_val)
-
-            # Cell Color Logic
-            if cell_text == "-":
-                cell_class = "neutral-cell"
-            elif hr_fc == 0:
+            # If Forecast is 0, make ALL hourly cells YELLOW for the whole day
+            if hr_fc == 0:
                 cell_class = "yellow-cell"
+                if pd.isna(actual_val) or str(actual_val).strip() == "" or str(actual_val) == "nan":
+                    cell_text = "-"
+                else:
+                    try:
+                        act_num = float(actual_val)
+                        cell_text = f"{int(act_num)}" if act_num.is_integer() else f"{act_num}"
+                    except (ValueError, TypeError):
+                        cell_text = str(actual_val)
             else:
-                try:
-                    act_num = float(actual_val)
-                    if act_num >= hr_fc:
-                        cell_class = "pass-cell"
-                    else:
-                        cell_class = "fail-cell"
-                except (ValueError, TypeError):
+                if pd.isna(actual_val) or str(actual_val).strip() == "" or str(actual_val) == "nan":
+                    cell_text = "-"
                     cell_class = "neutral-cell"
+                else:
+                    try:
+                        act_num = float(actual_val)
+                        cell_text = f"{int(act_num)}" if act_num.is_integer() else f"{act_num}"
+                        if act_num >= hr_fc:
+                            cell_class = "pass-cell"
+                        else:
+                            cell_class = "fail-cell"
+                    except (ValueError, TypeError):
+                        cell_text = str(actual_val)
+                        cell_class = "neutral-cell"
 
             html += f'<td class="{cell_class}">{cell_text}</td>'
 
-        # Total Column
+        # Total Column (Formatted as normal cell style)
         total_text = f"{int(total_actual_so_far)}" if total_actual_so_far.is_integer() else f"{total_actual_so_far}"
         if entered_hours_count == 0:
             total_text = "-"
             
-        html += f'<td class="total-cell">{total_text}</td>'
+        html += f'<td class="neutral-cell">{total_text}</td>'
 
         html += '</tr>'
 
