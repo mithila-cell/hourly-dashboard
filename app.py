@@ -76,11 +76,16 @@ st.markdown("""
     }
     .yellow-cell {
         background-color: #EAB308 !important;
-        color: white !important;
+        color: black !important;
     }
     .neutral-cell {
-        background-color: #F8FAFC;
-        color: #0F172A;
+        background-color: #F8FAFC !important;
+        color: #0F172A !important;
+    }
+    .total-cell {
+        background-color: #0F172A !important;
+        color: #FFFFFF !important;
+        font-size: 12px !important;
     }
     .pm-cell {
         background-color: #E2E8F0;
@@ -167,6 +172,7 @@ if not df_raw.empty:
     
     for h in hours:
         html += f'<th>H{h}</th>'
+    html += '<th>TOTAL</th>'  # 8 වෙනි පැයට පස්සේ Total Column එක එකතු කළා
     html += '</tr></thead><tbody>'
 
     pm_counts = df['PM'].value_counts(sort=False)
@@ -203,11 +209,13 @@ if not df_raw.empty:
         # Target so far = Hourly Forecast * Entered Hours
         target_so_far = hr_fc * entered_hours_count
         
-        # Line Number Cell Style (Blinking Red if below 40% of target so far)
+        # Line Number Cell Style
         line_class = "neutral-cell"
-        if entered_hours_count > 0 and target_so_far > 0:
+        if hr_fc == 0:
+            line_class = "yellow-cell"  # Forecast 0 නම් Line No එක කහ පාටයි
+        elif entered_hours_count > 0 and target_so_far > 0:
             if total_actual_so_far < (0.40 * target_so_far):
-                line_class = "blinking-line"
+                line_class = "blinking-line"  # 40% ට අඩු නම් Blinking Red
 
         html += f'<tr>'
         
@@ -236,7 +244,7 @@ if not df_raw.empty:
             if cell_text == "-":
                 cell_class = "neutral-cell"
             elif hr_fc == 0:
-                cell_class = "yellow-cell"
+                cell_class = "yellow-cell"  # Forecast 0 නම් කහ පාටයි
             else:
                 try:
                     act_num = float(actual_val)
@@ -249,14 +257,15 @@ if not df_raw.empty:
 
             html += f'<td class="{cell_class}">{cell_text}</td>'
 
+        # Total Column එක පෙන්නන ස්ථානය
+        total_text = f"{int(total_actual_so_far)}" if total_actual_so_far.is_integer() else f"{total_actual_so_far}"
+        if entered_hours_count == 0:
+            total_text = "-"
+            
+        html += f'<td class="total-cell">{total_text}</td>'
+
         html += '</tr>'
 
     html += '</tbody></table></div>'
     
-    st.markdown(html, unsafe_allow_html=True)
-    
-    if st.button("🔄 Refresh Data"):
-        st.cache_data.clear()
-        st.rerun()
-else:
-    st.warning("No data found in Google Sheet.")
+    st.markdown(html
