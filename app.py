@@ -66,11 +66,40 @@ st.markdown("""
         white-space: nowrap;
     }
 
-    /* Keyframes for Blinking Red Alert (< 40% Target) */
+    /* Keyframe for Blinking Red Line Number Alert (< 40% Target) */
     @keyframes blink-animation {
         0% { background-color: #EF4444 !important; color: #FFFFFF !important; }
         50% { background-color: #7F1D1D !important; color: #FFFFFF !important; }
         100% { background-color: #EF4444 !important; color: #FFFFFF !important; }
+    }
+
+    /* Strict Colors with !important for full compatibility */
+    td.pass-cell {
+        background-color: #22C55E !important;
+        color: #FFFFFF !important;
+    }
+    td.fail-cell {
+        background-color: #EF4444 !important;
+        color: #FFFFFF !important;
+    }
+    td.yellow-cell {
+        background-color: #EAB308 !important;
+        color: #000000 !important;
+    }
+    td.neutral-cell {
+        background-color: #F8FAFC !important;
+        color: #0F172A !important;
+    }
+    td.pm-cell {
+        background-color: #E2E8F0 !important;
+        color: #0F172A !important;
+        vertical-align: middle;
+        font-weight: bold;
+        font-size: 10px;
+    }
+    td.blinking-line {
+        animation: blink-animation 1s infinite !important;
+        font-weight: bold !important;
     }
 
     @media (max-width: 600px) {
@@ -145,13 +174,6 @@ if not df_raw.empty:
     pm_counts = df['PM'].value_counts(sort=False)
     seen_pms = set()
 
-    # Direct Inline Style Variables
-    STYLE_YELLOW = 'style="background-color: #EAB308 !important; color: #000000 !important;"'
-    STYLE_PASS = 'style="background-color: #22C55E !important; color: #FFFFFF !important;"'
-    STYLE_FAIL = 'style="background-color: #EF4444 !important; color: #FFFFFF !important;"'
-    STYLE_NEUTRAL = 'style="background-color: #F8FAFC !important; color: #0F172A !important;"'
-    STYLE_BLINKING = 'style="animation: blink-animation 1s infinite !important; background-color: #EF4444 !important; color: #FFFFFF !important; font-weight: bold;"'
-
     for _, row in df.iterrows():
         pm_val = str(row.get('PM', ''))
         line_val = row.get('Line No Clean', '')
@@ -181,29 +203,29 @@ if not df_raw.empty:
 
         target_so_far = hr_fc * entered_hours_count
         
-        # Line Number Cell Style Logic (Direct Blinking Animation Inline Style)
-        line_style = STYLE_NEUTRAL
+        # Line Number Cell Class Logic (40% ට අඩු නම් Blinking Red)
+        line_class = "neutral-cell"
         if hr_fc > 0 and entered_hours_count > 0 and target_so_far > 0:
             if total_actual_so_far < (0.40 * target_so_far):
-                line_style = STYLE_BLINKING
+                line_class = "blinking-line"
 
         html += f'<tr>'
         
         if pm_val not in seen_pms:
             rowspan = pm_counts.get(pm_val, 1)
-            html += f'<td class="pm-cell" style="background-color: #E2E8F0 !important; color: #0F172A !important; vertical-align: middle;" rowspan="{rowspan}">{pm_val}</td>'
+            html += f'<td class="pm-cell" rowspan="{rowspan}">{pm_val}</td>'
             seen_pms.add(pm_val)
 
-        html += f'<td {line_style}>{line_val}</td>'
-        html += f'<td {STYLE_NEUTRAL}>{day_fc}</td>'
-        html += f'<td {STYLE_NEUTRAL}>{hr_fc_val if not pd.isna(hr_fc_val) else "-"}</td>'
+        html += f'<td class="{line_class}">{line_val}</td>'
+        html += f'<td class="neutral-cell">{day_fc}</td>'
+        html += f'<td class="neutral-cell">{hr_fc_val if not pd.isna(hr_fc_val) else "-"}</td>'
 
         for h in hours:
             actual_val = row.get(h, None)
             
             # Forecast = 0 නම් පැය 8ම Yellow වෙනවා
             if hr_fc == 0:
-                cell_style = STYLE_YELLOW
+                cell_class = "yellow-cell"
                 if pd.isna(actual_val) or str(actual_val).strip() == "" or str(actual_val) == "nan":
                     cell_text = "-"
                 else:
@@ -215,26 +237,26 @@ if not df_raw.empty:
             else:
                 if pd.isna(actual_val) or str(actual_val).strip() == "" or str(actual_val) == "nan":
                     cell_text = "-"
-                    cell_style = STYLE_NEUTRAL
+                    cell_class = "neutral-cell"
                 else:
                     try:
                         act_num = float(actual_val)
                         cell_text = f"{int(act_num)}" if act_num.is_integer() else f"{act_num}"
                         if act_num >= hr_fc:
-                            cell_style = STYLE_PASS
+                            cell_class = "pass-cell"
                         else:
-                            cell_style = STYLE_FAIL
+                            cell_class = "fail-cell"
                     except (ValueError, TypeError):
                         cell_text = str(actual_val)
-                        cell_style = STYLE_NEUTRAL
+                        cell_class = "neutral-cell"
 
-            html += f'<td {cell_style}>{cell_text}</td>'
+            html += f'<td class="{cell_class}">{cell_text}</td>'
 
         total_text = f"{int(total_actual_so_far)}" if total_actual_so_far.is_integer() else f"{total_actual_so_far}"
         if entered_hours_count == 0:
             total_text = "-"
             
-        html += f'<td {STYLE_NEUTRAL}>{total_text}</td>'
+        html += f'<td class="neutral-cell">{total_text}</td>'
 
         html += '</tr>'
 
