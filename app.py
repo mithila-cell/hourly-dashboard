@@ -66,24 +66,24 @@ st.markdown("""
         white-space: nowrap;
     }
     
-    /* Strict Color Classes with !important for Mobile Override */
-    .pass-cell {
+    /* Cell Color Classes */
+    .styled-table td.pass-cell {
         background-color: #22C55E !important;
         color: white !important;
     }
-    .fail-cell {
+    .styled-table td.fail-cell {
         background-color: #EF4444 !important;
         color: white !important;
     }
-    .yellow-cell {
+    .styled-table td.yellow-cell {
         background-color: #EAB308 !important;
         color: #000000 !important;
     }
-    .neutral-cell {
+    .styled-table td.neutral-cell {
         background-color: #F8FAFC !important;
         color: #0F172A !important;
     }
-    .pm-cell {
+    .styled-table td.pm-cell {
         background-color: #E2E8F0 !important;
         color: #0F172A !important;
         vertical-align: middle;
@@ -91,13 +91,14 @@ st.markdown("""
         font-size: 10px;
     }
 
-    /* Blinking Animation for Low Performing Lines (< 40% Target) */
+    /* Keyframes for Blinking Red Alert (< 40% Target) */
     @keyframes blink-animation {
-        0% { background-color: #EF4444 !important; color: white !important; }
-        50% { background-color: #7F1D1D !important; color: white !important; }
-        100% { background-color: #EF4444 !important; color: white !important; }
+        0% { background-color: #EF4444 !important; color: #FFFFFF !important; }
+        50% { background-color: #7F1D1D !important; color: #FFFFFF !important; }
+        100% { background-color: #EF4444 !important; color: #FFFFFF !important; }
     }
-    .blinking-line {
+    
+    .styled-table td.blinking-line {
         animation: blink-animation 1s infinite !important;
         font-weight: bold !important;
     }
@@ -203,7 +204,7 @@ if not df_raw.empty:
 
         target_so_far = hr_fc * entered_hours_count
         
-        # Line Number Cell Class Logic
+        # Line Number Cell Class Logic (Blinking Red Alert if < 40% of target)
         line_class = "neutral-cell"
         if hr_fc > 0 and entered_hours_count > 0 and target_so_far > 0:
             if total_actual_so_far < (0.40 * target_so_far):
@@ -223,7 +224,7 @@ if not df_raw.empty:
         for h in hours:
             actual_val = row.get(h, None)
             
-            # If Forecast is 0 -> ALL 8 Hours turn YELLOW
+            # Forecast = 0 නම් පැය 8ම Yellow වෙනවා
             if hr_fc == 0:
                 cell_class = "yellow-cell"
                 if pd.isna(actual_val) or str(actual_val).strip() == "" or str(actual_val) == "nan":
@@ -235,37 +236,4 @@ if not df_raw.empty:
                     except (ValueError, TypeError):
                         cell_text = str(actual_val)
             else:
-                if pd.isna(actual_val) or str(actual_val).strip() == "" or str(actual_val) == "nan":
-                    cell_text = "-"
-                    cell_class = "neutral-cell"
-                else:
-                    try:
-                        act_num = float(actual_val)
-                        cell_text = f"{int(act_num)}" if act_num.is_integer() else f"{act_num}"
-                        if act_num >= hr_fc:
-                            cell_class = "pass-cell"
-                        else:
-                            cell_class = "fail-cell"
-                    except (ValueError, TypeError):
-                        cell_text = str(actual_val)
-                        cell_class = "neutral-cell"
-
-            html += f'<td class="{cell_class}">{cell_text}</td>'
-
-        total_text = f"{int(total_actual_so_far)}" if total_actual_so_far.is_integer() else f"{total_actual_so_far}"
-        if entered_hours_count == 0:
-            total_text = "-"
-            
-        html += f'<td class="neutral-cell">{total_text}</td>'
-
-        html += '</tr>'
-
-    html += '</tbody></table></div>'
-    
-    st.markdown(html, unsafe_allow_html=True)
-    
-    if st.button("🔄 Refresh Data"):
-        st.cache_data.clear()
-        st.rerun()
-else:
-    st.warning("No data found in Google Sheet.")
+                if pd.isna(actual_val) or str(actual_val).strip()
