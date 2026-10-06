@@ -183,11 +183,13 @@ if not df_raw.empty:
         if pd.isna(day_fc) or day_fc == 'nan':
             day_fc = '-'
             
-        hr_fc_val = row.get('Hourly Forecast', 0)
+        hr_fc_raw = row.get('Hourly Forecast', 0)
         
         try:
-            hr_fc = float(hr_fc_val)
-        except (ValueError, TypeError):
+            hr_fc = float(pd.to_numeric(hr_fc_raw, errors='coerce'))
+            if pd.isna(hr_fc):
+                hr_fc = 0.0
+        except Exception:
             hr_fc = 0.0
 
         entered_hours_count = 0
@@ -195,7 +197,7 @@ if not df_raw.empty:
 
         for h in hours:
             val = row.get(h, None)
-            if not (pd.isna(val) or str(val).strip() == "" or str(val) == "nan"):
+            if val is not None and not pd.isna(val) and str(val).strip() not in ["", "nan", "-"]:
                 try:
                     act_val = float(val)
                     total_actual_so_far += act_val
@@ -205,7 +207,7 @@ if not df_raw.empty:
 
         target_so_far = hr_fc * entered_hours_count
         
-        # Line Number Cell Class (40% ට අඩු නම් neutral-cell නොදා blinking-line දානවා)
+        # Line Number Cell Class (40% ට වඩා අඩු නම් නිවි නිවී පත්තු වෙනවා)
         line_class = "neutral-cell"
         if hr_fc > 0 and entered_hours_count > 0 and target_so_far > 0:
             if total_actual_so_far < (0.40 * target_so_far):
@@ -220,7 +222,7 @@ if not df_raw.empty:
 
         html += f'<td class="{line_class}">{line_val}</td>'
         html += f'<td class="neutral-cell">{day_fc}</td>'
-        html += f'<td class="neutral-cell">{hr_fc_val if not pd.isna(hr_fc_val) else "-"}</td>'
+        html += f'<td class="neutral-cell">{hr_fc_raw if not pd.isna(hr_fc_raw) else "-"}</td>'
 
         for h in hours:
             actual_val = row.get(h, None)
@@ -228,7 +230,7 @@ if not df_raw.empty:
             # Forecast = 0 නම් පැය 8ම Yellow වෙනවා
             if hr_fc == 0:
                 cell_class = "yellow-cell"
-                if pd.isna(actual_val) or str(actual_val).strip() == "" or str(actual_val) == "nan":
+                if pd.isna(actual_val) or str(actual_val).strip() in ["", "nan", "-"]:
                     cell_text = "-"
                 else:
                     try:
@@ -237,7 +239,7 @@ if not df_raw.empty:
                     except (ValueError, TypeError):
                         cell_text = str(actual_val)
             else:
-                if pd.isna(actual_val) or str(actual_val).strip() == "" or str(actual_val) == "nan":
+                if pd.isna(actual_val) or str(actual_val).strip() in ["", "nan", "-"]:
                     cell_text = "-"
                     cell_class = "neutral-cell"
                 else:
