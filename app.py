@@ -66,14 +66,14 @@ st.markdown("""
         white-space: nowrap;
     }
 
-    /* Global Keyframes for Blinking Red Alert (< 40% Target) */
-    @keyframes blink-red {
-        0% { background-color: #EF4444; color: #FFFFFF; }
-        50% { background-color: #7F1D1D; color: #FFFFFF; }
-        100% { background-color: #EF4444; color: #FFFFFF; }
+    /* Keyframes for Blinking Red Alert (< 40% Target) */
+    @keyframes blink-animation {
+        0% { background-color: #EF4444 !important; color: #FFFFFF !important; }
+        50% { background-color: #7F1D1D !important; color: #FFFFFF !important; }
+        100% { background-color: #EF4444 !important; color: #FFFFFF !important; }
     }
 
-    /* Strict Colors */
+    /* Strict Base Colors */
     td.pass-cell {
         background-color: #22C55E !important;
         color: #FFFFFF !important;
@@ -96,6 +96,12 @@ st.markdown("""
         vertical-align: middle;
         font-weight: bold;
         font-size: 10px;
+    }
+
+    /* Blinking Red Class for Line Column (<40% target) */
+    td.blinking-line {
+        animation: blink-animation 1s infinite !important;
+        font-weight: bold !important;
     }
 
     @media (max-width: 600px) {
@@ -199,11 +205,11 @@ if not df_raw.empty:
 
         target_so_far = hr_fc * entered_hours_count
         
-        # Line Number Cell Style Logic (Direct Blinking Inline Style)
-        line_extra_style = ""
+        # Line Number Cell Class (40% ට අඩු නම් neutral-cell නොදා blinking-line දානවා)
+        line_class = "neutral-cell"
         if hr_fc > 0 and entered_hours_count > 0 and target_so_far > 0:
             if total_actual_so_far < (0.40 * target_so_far):
-                line_extra_style = 'style="animation: blink-red 1s infinite !important;"'
+                line_class = "blinking-line"
 
         html += f'<tr>'
         
@@ -212,7 +218,7 @@ if not df_raw.empty:
             html += f'<td class="pm-cell" rowspan="{rowspan}">{pm_val}</td>'
             seen_pms.add(pm_val)
 
-        html += f'<td class="neutral-cell" {line_extra_style}>{line_val}</td>'
+        html += f'<td class="{line_class}">{line_val}</td>'
         html += f'<td class="neutral-cell">{day_fc}</td>'
         html += f'<td class="neutral-cell">{hr_fc_val if not pd.isna(hr_fc_val) else "-"}</td>'
 
